@@ -1,3 +1,4 @@
+import { authCopy } from "./auth";
 import { voiceSettingsCopy } from "./voice-settings";
 import { liveVoiceCopy } from "./live-voice";
 import { uxCopy } from "./ux";
@@ -5,6 +6,7 @@ import type { Dictionary } from "./en";
 export const dictionary = {
   ...liveVoiceCopy["zh-Hans"],
   ...voiceSettingsCopy["zh-Hans"],
+  ...authCopy["zh-Hans"],
   ...uxCopy["zh-Hans"],
   voice: "语音聊天",
   playReply: "播放回复",

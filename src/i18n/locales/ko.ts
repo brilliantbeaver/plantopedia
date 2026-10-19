@@ -1,3 +1,4 @@
+import { authCopy } from "./auth";
 import { voiceSettingsCopy } from "./voice-settings";
 import { liveVoiceCopy } from "./live-voice";
 import { uxCopy } from "./ux";
@@ -5,6 +6,7 @@ import type { Dictionary } from "./en";
 export const dictionary = {
   ...liveVoiceCopy["ko"],
   ...voiceSettingsCopy["ko"],
+  ...authCopy["ko"],
   ...uxCopy["ko"],
   voice: "음성 대화",
   playReply: "응답 재생",

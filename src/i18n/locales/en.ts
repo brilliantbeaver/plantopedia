@@ -1,9 +1,11 @@
+import { authCopy } from "./auth";
 import { voiceSettingsCopy } from "./voice-settings";
 import { liveVoiceCopy } from "./live-voice";
 import { uxCopy } from "./ux";
 export const en = {
   ...liveVoiceCopy["en"],
   ...voiceSettingsCopy["en"],
+  ...authCopy["en"],
   ...uxCopy["en"],
   voice: "Voice Chat",
   playReply: "Play reply",

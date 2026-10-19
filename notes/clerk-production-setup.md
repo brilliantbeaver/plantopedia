@@ -33,7 +33,17 @@ Only the three public values above were added to EAS production. Local `.env` ga
 - Server and unit suites cover raw POST bodies, canonical origin, trusted IPs, multiple cookies, redirects, fixed upstream routing, route boundaries, generic errors and actual entrypoint middleware ordering.
 - Full type checking, lint, API compilation and script suites pass.
 - iOS, Android and web JavaScript exports, source maps and Expo public configuration pass the private-sentinel scan. This is a bundle privacy check, not an installed-device acceptance test.
-- Hosted checks and production email authentication are recorded below after deployment. Email tests use the user-authorized test address; received codes are needed to complete authentication.
+- PR #2 merged as `6c2ca3a` and deployed to production (`dpl_FiUBEkYYa3kuUaJn4qKDrgiMsP71`). The production alias points at that deployment. Hosted `/health`, `/ready` (database and photo Storage) and `/__clerk/v1/environment` returned 200; missing and invalid bearer tokens returned 401 with `private, no-store`.
+- The production Clerk environment confirms Native API enabled, email-code verification/sign-in and reset-password email codes enabled, and password required for signup. A real signup attempt and verification-code send for the user-authorized address returned 200. Delivery, sender-domain verification, successful sign-in, a valid-token API request and password reset remain pending the emailed code. Provider acceptance is not delivery confirmation.
+- The deployed revision's initial runtime-log scan returned no entries, and the request-log scan found no 5xx responses. Monitoring/drains were not provisioned by this work.
+
+## Native authentication correction
+
+Live testing revealed that `/v1/client/hosted_auth` returns 403 `feature_not_enabled` for this production instance, including with the installed Expo SDK's native headers. Native API access and regular email/password/code endpoints work. The configured Account Portal URLs also use an `accounts.` subdomain; do not attempt to fix them with DNS records for `vercel.app`.
+
+The native app now uses in-app forms built with the current `useSignIn()` and `useSignUp()` APIs. It supports email/password signup, signup verification, password or email-code signin, and email-code password reset. It finalizes only complete authentication, requires verified reset codes before a new password, clears sensitive fields on mode changes, prevents concurrent submissions and adds a resend cooldown. Validation errors are displayed without logging credentials. Labels are localized in all seven app languages. Expo web continues to open Clerk's web modal. These flows work without the hosted-auth feature or a new native dependency.
+
+Component regressions cover signup/code ordering, completed-session activation, rejection of unfinished authentication, reset ordering, validation errors and browser modal behavior. Installed-device acceptance still requires a native build with the production EAS environment. Additional MFA/session tasks, if enabled later, need corresponding UI; unfinished authentication is never treated as success.
 
 Production on the chosen `vercel.app` host uses Clerk's shared `accounts.dev` email infrastructure for sign-in, sign-up, verification and password reset **codes**. Branded email/template customization, email links and invitations require a separately chosen custom domain. Do not attempt to add DNS records for `vercel.app`.
 
