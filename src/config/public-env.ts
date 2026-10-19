@@ -11,9 +11,12 @@ export const PublicEnv = z.object({
   clerkProxyUrl: z
     .url()
     .refine((value) => {
-      if (!URL.canParse(value)) return false;
-      const url = new URL(value);
-      return url.protocol === "https:" && value === `${url.origin}/__clerk`;
+      try {
+        const url = new URL(value);
+        return url.protocol === "https:" && value === `${url.origin}/__clerk`;
+      } catch {
+        return false;
+      }
     })
     .optional(),
 });
