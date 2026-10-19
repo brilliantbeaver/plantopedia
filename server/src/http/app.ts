@@ -32,8 +32,8 @@ import { readinessCheck } from "./readiness.js";
 export function createApp(
   deps: Dependencies,
   options: BrowserOriginOptions = {},
+  app = express(),
 ) {
-  const app = express();
   const plants = plantService(deps);
   const companion = companionService(deps);
   const memory = memoryService(deps);

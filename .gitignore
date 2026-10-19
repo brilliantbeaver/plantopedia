@@ -52,3 +52,6 @@ coverage/
 artifacts/
 *.log
 firebase/.cache/
+
+# Local Vercel project link, pulled configuration, and build output
+/.vercel/

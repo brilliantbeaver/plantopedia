@@ -274,7 +274,9 @@ Camera access is requested when capturing; photo selection uses the OS picker. M
 
 ## Deploy the backend
 
-**Choose Heroku for this initial service.** One persistent Node process owns foreground Realtime WebSocket sessions (and legacy recorded-turn jobs). Keep one API instance for owner limits and deletion cleanup; shared coordination requires a separate implementation before scaling out. See the dated [hosting decision](notes/12_app_create_instr.md#411-choose-the-simplest-public-backend-host), [Heroku Node deployment](https://devcenter.heroku.com/articles/deploying-nodejs), and [Vercel function duration](https://vercel.com/docs/functions/configuring-functions/duration).
+The intended API host is now **Vercel**. The `plantopedia` project under the `brilliantbeaver` team is connected to the existing GitHub repository. `server/vercel.json` builds the root workspaces and packages `dist/server.js`, whose HTTP-server export preserves voice WebSocket upgrades. Local commands still start `server/src/index.ts` and its standalone worker. Production configuration and the remaining hosted-worker/voice migration are pending. See [Vercel project setup and deployment gates](notes/vercel-project-setup.md) for the verified settings and next steps. Native apps remain separate Expo/EAS builds.
+
+The earlier Heroku runbook below documents the current persistent-process implementation. One Node process owns foreground Realtime WebSocket sessions (and legacy recorded-turn jobs). Shared coordination requires a separate implementation before scaling out. See the dated [hosting decision](notes/12_app_create_instr.md#411-choose-the-simplest-public-backend-host), [Heroku Node deployment](https://devcenter.heroku.com/articles/deploying-nodejs), and [Vercel function duration](https://vercel.com/docs/functions/configuring-functions/duration).
 
 The following is a deployment runbook to validate in staging; this repository does **not** claim an executed deployment.
 
