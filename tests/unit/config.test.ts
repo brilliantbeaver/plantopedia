@@ -12,6 +12,33 @@ const env = {
   FIREBASE_STORAGE_EMULATOR_HOST: "127.0.0.1:9199",
 };
 
+test("Clerk proxy configuration requires a matching publishable key and exact HTTPS path", () => {
+  const proxy = "https://plantopedia-nine.vercel.app/__clerk";
+  expect(() => parseConfig({ ...env, CLERK_PROXY_URL: proxy })).toThrow(
+    "requires CLERK_PUBLISHABLE_KEY",
+  );
+  const key = "pk_live_Zml4dHVyZSQ=";
+  expect(
+    parseConfig({ ...env, CLERK_PROXY_URL: proxy, CLERK_PUBLISHABLE_KEY: key })
+      .CLERK_PROXY_URL,
+  ).toBe(proxy);
+  for (const invalid of [
+    "http://example.com/__clerk",
+    "https://example.com/",
+    `${proxy}/`,
+    `${proxy}?token=private`,
+    "https://user:private@example.com/__clerk",
+  ]) {
+    expect(() =>
+      parseConfig({
+        ...env,
+        CLERK_PROXY_URL: invalid,
+        CLERK_PUBLISHABLE_KEY: key,
+      }),
+    ).toThrow("Invalid configuration: CLERK_PROXY_URL");
+  }
+});
+
 test("browser origins are optional, bounded and parsed as exact origins", () => {
   expect(parseConfig(env).WEB_ALLOWED_ORIGINS).toEqual([]);
   expect(
