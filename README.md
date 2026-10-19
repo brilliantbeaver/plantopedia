@@ -236,7 +236,7 @@ Readiness allows three bounded checks for temporary Firebase connection delays. 
 
 For hosted HTTPS APIs, Expo starts only Metro; keep that API running on its host. Set `PLANTOPEDIA_AUTO_START_API=false` only if you deliberately manage a local API separately. Restart Expo after editing a managed API's server code or server/public settings; for automatic backend source reloads, use the [standalone API watcher](#run-the-backend). The helper never runs during tests, CI, production, exports or EAS builds. Dependency installation and native builds remain separate setup steps.
 
-Browser sign-in opens Clerk's web modal with account creation enabled; iOS and Android use hosted authentication with a native callback URL.
+Browser sign-in opens Clerk's web modal with account creation enabled. iOS and Android use in-app Clerk email/password and code forms for sign-in, account creation, verification and password reset. Production Clerk's hosted-auth feature is unavailable on this instance; the native forms use the configured Frontend API proxy directly. See [production authentication](notes/clerk-production-setup.md).
 
 ### First native install or native dependency changes
 
