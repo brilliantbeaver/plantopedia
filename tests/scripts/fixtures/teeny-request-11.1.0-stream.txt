@@ -1,0 +1,34 @@
+    if (callback === undefined) {
+        // Stream mode
+        const requestStream = streamEvents(new stream_1.PassThrough());
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        let responseStream;
+        requestStream.once('reading', () => {
+            if (responseStream) {
+                (0, stream_1.pipeline)(responseStream, requestStream, () => { });
+            }
+            else {
+                requestStream.once('response', () => {
+                    (0, stream_1.pipeline)(responseStream, requestStream, () => { });
+                });
+            }
+        });
+        options.compress = false;
+        teenyRequest.stats.requestStarting();
+        fetch(uri, options).then(res => {
+            teenyRequest.stats.requestFinished();
+            responseStream = res.body;
+            responseStream.on('error', (err) => {
+                requestStream.emit('error', err);
+            });
+            const response = fetchToRequestResponse(options, res);
+            requestStream.emit('response', response);
+        }, err => {
+            teenyRequest.stats.requestFinished();
+            requestStream.emit('error', err);
+        });
+        // fetch doesn't supply the raw HTTP stream, instead it
+        // returns a PassThrough piped from the HTTP response
+        // stream.
+        return requestStream;
+    }

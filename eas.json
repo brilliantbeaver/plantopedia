@@ -1,0 +1,10 @@
+{
+  "cli": {"version": "24.8.0", "appVersionSource": "local"},
+  "build": {
+    "development": {"developmentClient": true, "distribution": "internal", "environment": "development", "android": {"buildType": "apk"}},
+    "simulator": {"extends": "development", "ios": {"simulator": true}},
+    "preview": {"distribution": "internal", "environment": "preview", "android": {"buildType": "apk"}},
+    "production": {"environment": "production", "android": {"buildType": "app-bundle"}}
+  },
+  "submit": {"production": {}}
+}

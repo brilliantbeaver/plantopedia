@@ -1,0 +1,28 @@
+{
+  "name": "@plantopedia/server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@clerk/backend": "3.23.2",
+    "@plantopedia/contracts": "0.1.0",
+    "@tavily/core": "0.7.14",
+    "cors": "2.8.6",
+    "dotenv": "18.0.8",
+    "express": "5.3.0",
+    "express-rate-limit": "8.7.1",
+    "firebase-admin": "14.5.0",
+    "helmet": "8.3.0",
+    "langsmith": "0.10.13",
+    "multer": "2.4.0",
+    "openai": "7.34.0",
+    "sharp": "0.35.5",
+    "ws": "8.22.0"
+  }
+}
