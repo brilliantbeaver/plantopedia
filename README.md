@@ -86,6 +86,8 @@ Only `EXPO_PUBLIC_*` values are bundled into the app; never give a private key t
 | `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` | Public app key: `pk_test_...` for a development Clerk instance or `pk_live_...` for production. Required to connect the mobile app. Use this exact Expo variable name; `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` is for Next.js and is not read by this app. |
 | `CLERK_SECRET_KEY` | Private backend key from the same instance: `sk_test_...` or `sk_live_...`. Required for authenticated API use, including fake-provider mode. |
 | `CLERK_ISSUER_URL` | Exact HTTPS session-token issuer, e.g. `https://your-instance.clerk.accounts.dev`, matching the token's `iss` claim. Include `https://` when copying a hostname from Clerk; omit any trailing slash, path, query, fragment, or credentials. Use the issuer for the same Clerk instance as your keys. See [Clerk session-token claims](https://clerk.com/docs/guides/sessions/session-tokens). |
+| `CLERK_PUBLISHABLE_KEY` / `CLERK_PROXY_URL` | Server proxy settings: matching live publishable key and `https://plantopedia-nine.vercel.app/__clerk`. Express mounts the proxy before body parsing and `/v1` authentication. Leave both empty when a local proxy is unnecessary. |
+| `EXPO_PUBLIC_CLERK_PROXY_URL` | Set to `https://plantopedia-nine.vercel.app/__clerk` in EAS production. Independent Expo apps need the absolute URL. Keep the secret key on the server. |
 
 ### Server mode and external providers
 
@@ -274,7 +276,7 @@ Camera access is requested when capturing; photo selection uses the OS picker. M
 
 ## Deploy the backend
 
-The intended API host is now **Vercel**. The `plantopedia` project under the `brilliantbeaver` team is connected to the existing GitHub repository. `server/vercel.json` builds the root workspaces and packages `dist/server.js`, whose HTTP-server export preserves voice WebSocket upgrades. Local commands still start `server/src/index.ts` and its standalone worker. Production configuration and the remaining hosted-worker/voice migration are pending. See [Vercel project setup and deployment gates](notes/vercel-project-setup.md) for the verified settings and next steps. Native apps remain separate Expo/EAS builds.
+The API host is **Vercel**, at `https://plantopedia-nine.vercel.app`. The `plantopedia` project under the `brilliantbeaver` team is connected to the existing GitHub repository. `server/vercel.json` builds the root workspaces and packages `dist/server.js`, whose HTTP-server export preserves voice WebSocket upgrades. Local commands still start `server/src/index.ts` and its standalone worker. Production server variables and the public EAS environment are configured. See [Clerk production setup](notes/clerk-production-setup.md) for proxy/authentication validation and [Vercel deployment gates](notes/vercel-project-setup.md) for the outstanding hosted-worker/voice work. Native apps remain separate Expo/EAS builds.
 
 The earlier Heroku runbook below documents the current persistent-process implementation. One Node process owns foreground Realtime WebSocket sessions (and legacy recorded-turn jobs). Shared coordination requires a separate implementation before scaling out. See the dated [hosting decision](notes/12_app_create_instr.md#411-choose-the-simplest-public-backend-host), [Heroku Node deployment](https://devcenter.heroku.com/articles/deploying-nodejs), and [Vercel function duration](https://vercel.com/docs/functions/configuring-functions/duration).
 

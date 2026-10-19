@@ -34,6 +34,18 @@ const Env = z.object({
   FIRESTORE_EMULATOR_HOST: optional,
   FIREBASE_STORAGE_EMULATOR_HOST: optional,
   CLERK_SECRET_KEY: z.string().min(1),
+  CLERK_PUBLISHABLE_KEY: z
+    .union([z.literal(""), z.string().regex(/^pk_(test|live)_[A-Za-z0-9=]+$/)])
+    .default(""),
+  CLERK_PROXY_URL: z
+    .string()
+    .default("")
+    .refine((value) => {
+      if (!value) return true;
+      if (!URL.canParse(value)) return false;
+      const url = new URL(value);
+      return url.protocol === "https:" && value === `${url.origin}/__clerk`;
+    }),
   CLERK_ISSUER_URL: z.string().refine((value) => {
     if (!URL.canParse(value)) return false;
     const url = new URL(value);
@@ -82,6 +94,10 @@ export function parseConfig(
     throw new Error(`Invalid configuration: ${invalid.join(", ")}${hint}`);
   }
   const config = result.data;
+  if (config.CLERK_PROXY_URL && !config.CLERK_PUBLISHABLE_KEY)
+    throw new Error(
+      "CLERK_PROXY_URL requires CLERK_PUBLISHABLE_KEY from the same Clerk instance",
+    );
   if (config.USE_FIREBASE_EMULATORS) {
     const invalid: string[] = [];
     if (!config.FIREBASE_PROJECT_ID.startsWith("demo-"))

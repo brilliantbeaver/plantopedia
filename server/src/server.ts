@@ -5,6 +5,7 @@ import { loadConfig } from "./config/load-env.js";
 import { createFirebase } from "./storage/firebase.js";
 import { createIdentity } from "./http/identity.js";
 import { createApp } from "./http/app.js";
+import { createClerkProxy } from "./http/clerk-proxy.js";
 import { attachVoiceSocket } from "./http/voice-socket.js";
 import { createPlantnet } from "./providers/plantnet.js";
 import { createResearch } from "./providers/research.js";
@@ -37,7 +38,10 @@ const dependencies = {
   embeddingDimensions: config.OPENAI_EMBEDDING_DIMENSIONS,
 };
 const browserOrigins = { allowedOrigins: config.WEB_ALLOWED_ORIGINS };
-const app = createApp(dependencies, browserOrigins, express());
+const app = express();
+app.disable("x-powered-by");
+app.use(createClerkProxy(config));
+createApp(dependencies, browserOrigins, app);
 let draining = false;
 const server = createServer((req, res) => {
   if (draining) {

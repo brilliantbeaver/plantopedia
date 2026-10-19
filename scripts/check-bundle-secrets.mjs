@@ -12,6 +12,7 @@ const env = {
   EXPO_PUBLIC_API_BASE_URL: "https://api.example.invalid",
   EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY:
     "pk_test_Zml4dHVyZS5jbGVyay5hY2NvdW50cy5kZXYk",
+  EXPO_PUBLIC_CLERK_PROXY_URL: "https://api.example.invalid/__clerk",
   PLANTNET_API_KEY: sentinel,
   OPENAI_API_KEY: sentinel,
   TAVILY_API_KEY: sentinel,

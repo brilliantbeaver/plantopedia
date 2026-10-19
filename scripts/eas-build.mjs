@@ -22,6 +22,7 @@ const names = [
   "EXPO_TOKEN",
   "EXPO_PUBLIC_API_BASE_URL",
   "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY",
+  "EXPO_PUBLIC_CLERK_PROXY_URL",
 ];
 const env = Object.fromEntries(
   names.flatMap((name) =>

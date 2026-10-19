@@ -14,6 +14,8 @@ const config = parseConfig({
   FIREBASE_STORAGE_BUCKET: "entrypoint-test.invalid",
   CLERK_SECRET_KEY: "unused-test-secret",
   CLERK_ISSUER_URL: "https://clerk.example.com",
+  CLERK_PUBLISHABLE_KEY: `pk_live_${Buffer.from("clerk.example.com$").toString("base64")}`,
+  CLERK_PROXY_URL: "https://example.com/__clerk",
 });
 jest.unstable_mockModule("../src/config/load-env.js", () => ({
   loadConfig: () => config,
@@ -77,6 +79,24 @@ test("exported server preserves health, readiness, security headers and Clerk bo
     .set("Authorization", "Bearer user_a");
   expect(authorized.status).toBe(200);
   expect(authorized.body.items).toEqual([]);
+});
+
+test("entrypoint routes Clerk before API JSON parsing and bearer authentication", async () => {
+  const upstream = jest
+    .spyOn(globalThis, "fetch")
+    .mockResolvedValue(new Response("ok"));
+  try {
+    const response = await request(server)
+      .post("/__clerk/v1/client/sign_ins")
+      .set("Content-Type", "application/json")
+      .send('{"identifier":"fixture@example.com"}');
+    expect(response.status).toBe(200);
+    expect(await new Response(upstream.mock.calls[0]![1]?.body).text()).toBe(
+      '{"identifier":"fixture@example.com"}',
+    );
+  } finally {
+    upstream.mockRestore();
+  }
 });
 
 test("exported HTTP server retains WebSocket upgrades and refuses an unauthenticated session", async () => {

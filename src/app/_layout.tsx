@@ -73,6 +73,9 @@ export default function RootLayout() {
           {publicConfig.success ? (
             <ClerkProvider
               publishableKey={publicConfig.data.clerkPublishableKey}
+              {...(publicConfig.data.clerkProxyUrl
+                ? { proxyUrl: publicConfig.data.clerkProxyUrl }
+                : {})}
               {...(tokenCache ? { tokenCache } : {})}
             >
               <AuthGate />
