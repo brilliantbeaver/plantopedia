@@ -55,3 +55,6 @@ firebase/.cache/
 
 # Local Vercel project link, pulled configuration, and build output
 /.vercel/
+
+# Generated Expo web export served by Vercel's Express CDN
+/server/public/

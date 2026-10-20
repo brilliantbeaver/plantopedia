@@ -70,14 +70,15 @@ test.each([
   );
 });
 
-test.each(["https://fixture.clerk.accounts.dev", "https://clerk.example.com"])(
-  "accepts the exact HTTPS Clerk issuer %s",
-  (issuer) => {
-    expect(
-      parseConfig({ ...env, CLERK_ISSUER_URL: issuer }).CLERK_ISSUER_URL,
-    ).toBe(issuer);
-  },
-);
+test.each([
+  "https://fixture.clerk.accounts.dev",
+  "https://clerk.example.com",
+  "https://app.example.com/__clerk",
+])("accepts the exact HTTPS Clerk issuer %s", (issuer) => {
+  expect(
+    parseConfig({ ...env, CLERK_ISSUER_URL: issuer }).CLERK_ISSUER_URL,
+  ).toBe(issuer);
+});
 
 test.each([
   undefined,
@@ -86,6 +87,11 @@ test.each([
   "http://fixture.clerk.accounts.dev",
   "https://fixture.clerk.accounts.dev/",
   "https://fixture.clerk.accounts.dev/path",
+  "https://app.example.com/__clerk/",
+  "https://app.example.com/__clerk/extra",
+  "https://app.example.com/__clerk?query=value",
+  "https://app.example.com/__clerk#fragment",
+  "https://user:private-value@app.example.com/__clerk",
   "https://fixture.clerk.accounts.dev?query=value",
   "https://fixture.clerk.accounts.dev#fragment",
   "https://user:private-value@fixture.clerk.accounts.dev",

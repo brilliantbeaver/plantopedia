@@ -85,7 +85,7 @@ Only `EXPO_PUBLIC_*` values are bundled into the app; never give a private key t
 | `EXPO_PUBLIC_API_BASE_URL` | API origin without `/v1`, e.g. `https://api.example.com`. Local HTTP is accepted only for `127.0.0.1` or `localhost` (template: `http://127.0.0.1:3001`). On a physical phone use a reachable HTTPS endpoint, not loopback. |
 | `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` | Public app key: `pk_test_...` for a development Clerk instance or `pk_live_...` for production. Required to connect the mobile app. Use this exact Expo variable name; `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` is for Next.js and is not read by this app. |
 | `CLERK_SECRET_KEY` | Private backend key from the same instance: `sk_test_...` or `sk_live_...`. Required for authenticated API use, including fake-provider mode. |
-| `CLERK_ISSUER_URL` | Exact HTTPS session-token issuer, e.g. `https://your-instance.clerk.accounts.dev`, matching the token's `iss` claim. Include `https://` when copying a hostname from Clerk; omit any trailing slash, path, query, fragment, or credentials. Use the issuer for the same Clerk instance as your keys. See [Clerk session-token claims](https://clerk.com/docs/guides/sessions/session-tokens). |
+| `CLERK_ISSUER_URL` | Exact HTTPS session-token issuer, e.g. `https://your-instance.clerk.accounts.dev`, matching the token's `iss` claim. Include `https://` when copying a hostname from Clerk; preserve `/__clerk` when it is present in the verified issuer; omit any trailing slash, query, fragment, or credentials. Use the issuer for the same Clerk instance as your keys. See [Clerk session-token claims](https://clerk.com/docs/guides/sessions/session-tokens). |
 | `CLERK_PUBLISHABLE_KEY` / `CLERK_PROXY_URL` | Server proxy settings: matching live publishable key and `https://plantopedia-nine.vercel.app/__clerk`. Express mounts the proxy before body parsing and `/v1` authentication. Leave both empty when a local proxy is unnecessary. |
 | `EXPO_PUBLIC_CLERK_PROXY_URL` | Set to `https://plantopedia-nine.vercel.app/__clerk` in EAS production. Independent Expo apps need the absolute URL. Keep the secret key on the server. |
 
@@ -206,6 +206,42 @@ Stop the watcher/server with Ctrl-C; shutdown stops new connections, closes voic
 
 ## Run and install the mobile app
 
+### Use the deployed Vercel API with Expo
+
+For this checkout, `.env` points Expo at the production API. Run `npx expo start` from the repository root, then open the app in matching SDK 57 Expo Go. The relevant local settings are:
+
+```dotenv
+EXPO_PUBLIC_API_BASE_URL=https://plantopedia-nine.vercel.app
+EXPO_PUBLIC_CLERK_PROXY_URL=https://plantopedia-nine.vercel.app/__clerk
+PLANTOPEDIA_AUTO_START_API=false
+PLANTOPEDIA_PHONE_API=false
+```
+
+Keep `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` set to the matching production `pk_live_...` key. Expo uses only these public client settings; Firebase Admin, Clerk secret, and provider keys stay on the API server. `.env` is ignored by Git, so another checkout must configure these values itself; `.env.example` retains the separate local-backend template.
+
+This mode starts Metro only and uses real production accounts, data, and live providers. No local API or Cloudflare API tunnel is needed. The phone still needs access to Metro over the same Wi-Fi network, or use `npx expo start --tunnel` for the Metro connection. After changing public environment settings, stop an older Metro process and run `npx expo start --clear` once to discard cached bundles.
+
+Production Clerk on native uses Google OAuth in a custom development/installed build, or the in-app email/password and email-code forms through the HTTPS proxy. Expo Go supports email authentication; its shared app cannot register the Google OAuth callback scheme. A successful sign-in should be followed by a successful collection refresh to establish authenticated API access. Expo Go supports the standard screens, but continuous Voice Chat requires the custom Plantopedia native build and `npx expo start --dev-client`. Hosted worker and multi-instance voice limitations are recorded in [deployment status](notes/vercel-deployment-status.md); switching the API URL does not resolve them.
+
+### Local browser authentication
+
+Run `npm run web:local` (also `npm run web`) for localhost. It reads the matching Clerk Development keys from the ignored, private `.env.clerk.local` file:
+
+```dotenv
+EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
+CLERK_SECRET_KEY=sk_test_...
+```
+
+This command starts a local API and Expo together, selecting the development issuer and removing the production proxy for both client and server. Production Clerk browser keys cannot run on localhost. Development tokens cannot authenticate to the production API, so the local browser uses `http://127.0.0.1:3001`. Firebase and provider settings still come from `.env`, with optional overrides in `.env.clerk.local`; choose a separate development Firebase project if you want isolated data. Development and production Clerk accounts are separate.
+
+Stop Metro before changing profiles. `npx expo start` continues to use `.env` for native production-API testing. Pressing `w` in that production-key profile displays setup guidance; use `npm run web:local` instead. Metro excludes `.env*` files from its dependency graph and receives only public values from Expo's environment injection. Restart after editing environment files.
+
+See [local and Google authentication](notes/clerk-local-and-google.md) for setup and verification limits.
+
+### Deploy the web app and API to Vercel
+
+With production settings in `.env` and this checkout linked to the existing Vercel project, run `npm run deploy:vercel -- --yes`. The command generates the public web assets before upload and stages the production deployment. Check its returned URL with `vercel curl`, then assign the public domain with `vercel alias set`. See [the deployment instructions](notes/clerk-local-and-google.md#vercel-web-deployment). This publishes the browser app and API; installed mobile apps use a separate EAS build.
+
 ### Everyday startup: one Expo server
 
 After [installation](#prerequisites-and-installation) and [configuration](#configuration), run this from `mobile-apps/experiments/plantopedia`:
@@ -228,7 +264,7 @@ For a loopback API such as `http://127.0.0.1:3001`, this starts a managed API an
 | Return to the development client | Press `s` again and scan the updated QR code. |
 | Reload or stop | Press `r` to reload connected apps, `?` for more shortcuts, or Ctrl-C once to stop Metro and its managed API. |
 
-Web and native previews share this Metro process; changing targets does not require another startup command. If port 8081 is occupied by this project's Metro, use its terminal or stop it before restarting. Follow the URL printed by Expo if you deliberately choose another port. See [Expo CLI launch targets and shortcuts](https://docs.expo.dev/more/expo-cli/#develop).
+Web and native previews can share a Metro process only when they use a compatible Clerk/API profile. This checkout uses production Clerk for native; restart with `npm run web:local` for localhost browser authentication. If port 8081 is occupied by this project's Metro, use its terminal or stop it before restarting. Follow the URL printed by Expo if you deliberately choose another port. See [Expo CLI launch targets and shortcuts](https://docs.expo.dev/more/expo-cli/#develop).
 
 Press **Ctrl-C once in the Expo terminal** to stop both development servers. A separate supervisor gives the API time to close connections and voice resources and flush telemetry, then force-stops it after ten seconds if necessary. This deadline survives Expo's immediate exit, even if the API event loop is blocked. The shell prompt can return while API cleanup finishes; allow up to ten seconds before restarting. Parent crashes and interrupts during startup also trigger cleanup. This stops the servers; an installed phone app, simulator or browser tab remains open.
 
@@ -236,7 +272,7 @@ Readiness allows three bounded checks for temporary Firebase connection delays. 
 
 For hosted HTTPS APIs, Expo starts only Metro; keep that API running on its host. Set `PLANTOPEDIA_AUTO_START_API=false` only if you deliberately manage a local API separately. Restart Expo after editing a managed API's server code or server/public settings; for automatic backend source reloads, use the [standalone API watcher](#run-the-backend). The helper never runs during tests, CI, production, exports or EAS builds. Dependency installation and native builds remain separate setup steps.
 
-Browser sign-in opens Clerk's web modal with account creation enabled. iOS and Android use in-app Clerk email/password and code forms for sign-in, account creation, verification and password reset. Production Clerk's hosted-auth feature is unavailable on this instance; the native forms use the configured Frontend API proxy directly. See [production authentication](notes/clerk-production-setup.md).
+Browser sign-in mounts Clerk's hash-routed form with account creation enabled so OAuth callbacks can resume at `/login`. iOS and Android use Google OAuth in an installed/custom build, plus in-app Clerk email/password and code forms for sign-in, account creation, verification and password reset. Production Clerk's hosted-auth feature is unavailable on this instance; the native forms use the configured Frontend API proxy directly. See [production authentication](notes/clerk-production-setup.md).
 
 ### First native install or native dependency changes
 
@@ -357,7 +393,7 @@ Functional tests exercise public HTTP behavior, persistent repository state acro
 | `ENOENT` renaming `~/.expo/codesigning/.../development-code-signing-settings-2.json.<suffix>` | Run `npm run postinstall`, stop the existing Expo process, and restart with `npx expo start`. Use `s` to select Expo Go if needed. Concurrent writes in the affected Expo JSON dependency share a temporary filename; the install patch fixes that race. |
 | App shows configuration screen / cannot reach API | Both public variables must be valid; physical phones need reachable HTTPS. Restart Metro after public config changes. |
 | Sign-in succeeds but the collection is unavailable | Clerk runs independently of the API. Check `/ready` at the configured API origin. Restart an older Metro with `npx expo start` to enable automatic local API startup, then use **Refresh collection**. With a hosted API or automatic startup disabled, start/fix that API separately. Keep local `PORT` aligned with `EXPO_PUBLIC_API_BASE_URL`; changing CORS cannot start a missing server. |
-| `Invalid configuration: CLERK_ISSUER_URL` | Supply the full `https://` Clerk issuer with no trailing slash/path. A bare `your-instance.clerk.accounts.dev` hostname is incomplete. An exported shell/hosting value overrides `.env`; restart the API after correcting the active value. |
+| `Invalid configuration: CLERK_ISSUER_URL` | Supply the exact verified `https://` Clerk issuer, including `/__clerk` for proxy-issued sessions, with no trailing slash. A bare `your-instance.clerk.accounts.dev` hostname is incomplete. An exported shell/hosting value overrides `.env`; restart the API after correcting the active value. |
 | Clerk publishable key is present but the app still shows configuration setup | Name it `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY`; keys copied from a Next.js setup under `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` are ignored by Expo. Keep the existing key value and restart Metro. |
 | Sign-in callback fails | Same Clerk app/issuer/publishable key, Native API enabled, Expo identifiers/plugin and allowed callback configured; rebuild after native changes. |
 | API refuses to start | Error reports invalid variable names and safe format guidance, without their values. Emulator mode requires a `demo-` project and both loopback hosts; a real project with `USE_FIREBASE_EMULATORS=true` is rejected. Hosted development requires `USE_FIREBASE_EMULATORS=false` and empty/removed emulator hosts. |

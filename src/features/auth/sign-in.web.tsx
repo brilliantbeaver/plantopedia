@@ -1,26 +1,8 @@
-import { useState } from "react";
-import { useClerk } from "@clerk/expo";
-import { Action, Feedback } from "../../components/ui";
-import { usePreferences } from "../../theme/preferences";
+import { SignIn as ClerkSignIn } from "@clerk/expo/web";
 
 export function SignIn() {
-  const clerk = useClerk();
-  const { t } = usePreferences();
-  const [error, setError] = useState<unknown>(null);
-  return (
-    <>
-      <Action
-        title={t("signIn")}
-        onPress={() => {
-          setError(null);
-          try {
-            clerk.openSignIn({ withSignUp: true });
-          } catch (error) {
-            setError(error);
-          }
-        }}
-      />
-      <Feedback error={error} />
-    </>
-  );
+  // Keep Clerk mounted when OAuth returns to /login#/sso-callback, including
+  // signup transfer and additional verification. A modal alone cannot resume
+  // after a full-page redirect, and the default Account Portal is not hosted.
+  return <ClerkSignIn routing="hash" withSignUp />;
 }

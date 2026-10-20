@@ -66,7 +66,8 @@
     "start": "expo start --go",
     "start:dev-client": "expo start --dev-client",
     "start:preview": "expo start --go",
-    "web": "expo start --web",
+    "web": "node scripts/start-local-web.mjs",
+    "web:local": "node scripts/start-local-web.mjs",
     "ios": "node scripts/eas-build.mjs build --profile development --platform ios",
     "android": "node scripts/eas-build.mjs build --profile development --platform android",
     "build:contracts": "npm run build -w @plantopedia/contracts",
@@ -84,6 +85,7 @@
     "eas-build-post-install": "npm run build:contracts",
     "test:bundle-secrets": "node scripts/check-bundle-secrets.mjs",
     "deploy:api": "node scripts/deploy-heroku.mjs",
+    "deploy:vercel": "node scripts/deploy-vercel.mjs",
     "build:mobile": "node scripts/eas-build.mjs"
   },
   "private": true,
