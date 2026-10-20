@@ -1,5 +1,10 @@
 const en = {
   authSignIn: "Sign in",
+  authGoogle: "Continue with Google",
+  authGoogleBuild:
+    "Google sign-in needs the Plantopedia development or installed app. In Expo Go, use email sign-in below.",
+  authGoogleIncomplete:
+    "Google sign-in needs additional verification. Try signing in with email to complete your account.",
   authEmail: "Email",
   authPassword: "Password",
   authNewPassword: "New password",
@@ -24,6 +29,11 @@ export const authCopy: Record<
   en,
   fr: {
     authSignIn: "Se connecter",
+    authGoogle: "Continuer avec Google",
+    authGoogleBuild:
+      "La connexion Google nécessite une version de développement ou installée de Plantopedia. Dans Expo Go, utilisez votre e-mail.",
+    authGoogleIncomplete:
+      "Une vérification supplémentaire est nécessaire. Essayez de vous connecter par e-mail pour terminer votre compte.",
     authEmail: "E-mail",
     authPassword: "Mot de passe",
     authNewPassword: "Nouveau mot de passe",
@@ -42,6 +52,11 @@ export const authCopy: Record<
   },
   es: {
     authSignIn: "Iniciar sesión",
+    authGoogle: "Continuar con Google",
+    authGoogleBuild:
+      "Google requiere la app instalada o de desarrollo de Plantopedia. En Expo Go, inicia sesión por correo.",
+    authGoogleIncomplete:
+      "Google requiere verificación adicional. Intenta iniciar sesión por correo para completar tu cuenta.",
     authEmail: "Correo electrónico",
     authPassword: "Contraseña",
     authNewPassword: "Nueva contraseña",
@@ -60,6 +75,11 @@ export const authCopy: Record<
   },
   de: {
     authSignIn: "Anmelden",
+    authGoogle: "Mit Google fortfahren",
+    authGoogleBuild:
+      "Google benötigt die installierte Plantopedia-App oder einen Entwicklungsbuild. In Expo Go bitte E-Mail verwenden.",
+    authGoogleIncomplete:
+      "Eine weitere Bestätigung ist nötig. Melde dich per E-Mail an, um dein Konto zu vervollständigen.",
     authEmail: "E-Mail",
     authPassword: "Passwort",
     authNewPassword: "Neues Passwort",
@@ -78,6 +98,11 @@ export const authCopy: Record<
   },
   "zh-Hans": {
     authSignIn: "登录",
+    authGoogle: "使用 Google 继续",
+    authGoogleBuild:
+      "Google 登录需要 Plantopedia 开发版或已安装的应用。在 Expo Go 中请使用邮箱登录。",
+    authGoogleIncomplete:
+      "Google 登录需要进一步验证。请尝试通过邮箱登录以完成账户设置。",
     authEmail: "电子邮箱",
     authPassword: "密码",
     authNewPassword: "新密码",
@@ -95,6 +120,11 @@ export const authCopy: Record<
   },
   ja: {
     authSignIn: "ログイン",
+    authGoogle: "Google で続行",
+    authGoogleBuild:
+      "Google ログインには Plantopedia の開発ビルドまたはインストール済みアプリが必要です。Expo Go ではメールでログインしてください。",
+    authGoogleIncomplete:
+      "追加の認証が必要です。メールでログインしてアカウントの設定を完了してください。",
     authEmail: "メールアドレス",
     authPassword: "パスワード",
     authNewPassword: "新しいパスワード",
@@ -113,6 +143,11 @@ export const authCopy: Record<
   },
   ko: {
     authSignIn: "로그인",
+    authGoogle: "Google로 계속",
+    authGoogleBuild:
+      "Google 로그인은 Plantopedia 개발 빌드 또는 설치된 앱이 필요합니다. Expo Go에서는 이메일로 로그인하세요.",
+    authGoogleIncomplete:
+      "추가 인증이 필요합니다. 이메일로 로그인하여 계정 설정을 완료하세요.",
     authEmail: "이메일",
     authPassword: "비밀번호",
     authNewPassword: "새 비밀번호",

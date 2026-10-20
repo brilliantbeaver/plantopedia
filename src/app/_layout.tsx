@@ -1,4 +1,4 @@
-import { Image } from "react-native";
+import { Image, Platform } from "react-native";
 import { Stack } from "expo-router";
 import { ClerkProvider, useAuth } from "@clerk/expo";
 import { tokenCache } from "@clerk/expo/token-cache";
@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { publicConfig } from "../config/public-env";
+import { webAuthConfigurationError } from "../config/web-auth";
 import { PreferencesProvider, usePreferences } from "../theme/preferences";
 import { Screen, Copy, Card, Feedback, styles } from "../components/ui";
 import { SessionProvider } from "../services/session";
@@ -51,13 +52,30 @@ function AuthGate() {
   );
 }
 export default function RootLayout() {
+  const webAuthError =
+    Platform.OS === "web" &&
+    typeof window !== "undefined" &&
+    publicConfig.success
+      ? webAuthConfigurationError(
+          publicConfig.data.clerkPublishableKey,
+          window.location.hostname,
+        )
+      : null;
   return (
     <SafeAreaProvider>
       <PreferencesProvider>
         <QueryClientProvider client={query}>
-          {publicConfig.success ? (
+          {publicConfig.success && !webAuthError ? (
             <ClerkProvider
               publishableKey={publicConfig.data.clerkPublishableKey}
+              {...(Platform.OS === "web"
+                ? {
+                    signInUrl: "/login",
+                    signUpUrl: "/login",
+                    signInFallbackRedirectUrl: "/plants",
+                    signUpFallbackRedirectUrl: "/plants",
+                  }
+                : {})}
               {...(publicConfig.data.clerkProxyUrl
                 ? { proxyUrl: publicConfig.data.clerkProxyUrl }
                 : {})}
@@ -74,8 +92,8 @@ export default function RootLayout() {
                 accessible={false}
               />
               <Copy>
-                Set EXPO_PUBLIC_API_BASE_URL and
-                EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY to connect this app.
+                {webAuthError ||
+                  "Set EXPO_PUBLIC_API_BASE_URL and EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY to connect this app."}
               </Copy>
             </Screen>
           )}

@@ -1,0 +1,32 @@
+.git/
+node_modules/
+**/node_modules/
+.env
+.env.*
+**/.env
+**/.env.*
+.expo/
+.vercel/
+artifacts/
+coverage/
+dist/
+**/dist/
+ios/
+android/
+*.log
+**/*.log
+**/*service-account*.json
+**/*serviceAccount*.json
+**/*.pem
+**/*.key
+**/*.p8
+**/*.p12
+**/*.jks
+**/*.mobileprovision
+
+# Unlike .gitignore, upload the generated public Expo assets.
+# Run npm run deploy:vercel to regenerate them before every deployment.
+# Expo preserves dependency directory names in exported asset URLs. These are
+# public font/image files, not installed packages; excluding them breaks icons.
+!server/public/assets/node_modules/
+!server/public/assets/node_modules/**

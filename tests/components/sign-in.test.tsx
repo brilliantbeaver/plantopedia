@@ -26,6 +26,24 @@ const mockSignUp = {
   verifications: { sendEmailCode: jest.fn(ok), verifyEmailCode: jest.fn(ok) },
 };
 const mockOpenSignIn = jest.fn();
+const mockWebSignIn = jest.fn((_props: unknown) => null);
+const mockStartSSOFlow = jest.fn();
+let mockExecutionEnvironment = "bare";
+jest.mock("expo-constants", () => ({
+  __esModule: true,
+  default: {
+    get executionEnvironment() {
+      return mockExecutionEnvironment;
+    },
+  },
+  ExecutionEnvironment: { StoreClient: "storeClient" },
+}));
+jest.mock("@clerk/expo/experimental", () => ({
+  useSSO: () => ({ startSSOFlow: mockStartSSOFlow }),
+}));
+jest.mock("@clerk/expo/web", () => ({
+  SignIn: (props: unknown) => mockWebSignIn(props),
+}));
 jest.mock("@clerk/expo", () => ({
   useSignIn: () => ({ signIn: mockSignIn }),
   useSignUp: () => ({ signUp: mockSignUp }),
@@ -38,6 +56,8 @@ beforeEach(() => {
   jest.clearAllMocks();
   mockSignIn.status = "complete";
   mockSignUp.status = "complete";
+  mockExecutionEnvironment = "bare";
+  mockStartSSOFlow.mockReset();
 });
 function native() {
   const screen = render(
@@ -129,16 +149,17 @@ test("Clerk validation errors do not activate a session", async () => {
   await screen.findByText("Password is too short");
   expect(mockSignIn.finalize).not.toHaveBeenCalled();
 });
-test("web sign-in opens the Clerk modal with account creation", () => {
-  const screen = render(
+test("web sign-in mounts immediately so a redirected callback can resume without a click", () => {
+  render(
     <PreferencesProvider>
       <WebSignIn />
     </PreferencesProvider>,
   );
-  fireEvent.press(
-    screen.getByRole("button", { name: "Sign in or create an account" }),
-  );
-  expect(mockOpenSignIn).toHaveBeenCalledWith({ withSignUp: true });
+  expect(mockWebSignIn).toHaveBeenCalledWith({
+    routing: "hash",
+    withSignUp: true,
+  });
+  expect(mockOpenSignIn).not.toHaveBeenCalled();
 });
 
 test("invalid email cannot start authentication and a sent code has a resend cooldown", async () => {
@@ -156,4 +177,86 @@ test("invalid email cannot start authentication and a sent code has a resend coo
   expect(resend.props.accessibilityState.disabled).toBe(true);
   fireEvent.press(resend);
   expect(mockSignIn.emailCode.sendCode).toHaveBeenCalledTimes(1);
+});
+
+test("Google passes the registered native callback to Core 3 without manually finalizing", async () => {
+  mockStartSSOFlow.mockResolvedValue({
+    createdSessionId: "session_google",
+    authSessionResult: { type: "success" },
+  });
+  const screen = render(
+    <PreferencesProvider>
+      <SignIn />
+    </PreferencesProvider>,
+  );
+  fireEvent.press(screen.getByRole("button", { name: "Continue with Google" }));
+  await waitFor(() =>
+    expect(mockStartSSOFlow).toHaveBeenCalledWith({
+      strategy: "oauth_google",
+      redirectUrl: "plantopedia://sso-callback",
+    }),
+  );
+  expect(mockSignIn.reset).toHaveBeenCalledTimes(1);
+  expect(mockSignUp.reset).toHaveBeenCalledTimes(1);
+  expect(mockSignIn.finalize).not.toHaveBeenCalled();
+});
+
+test.each(["cancel", "dismiss"])(
+  "Google %s leaves the user signed out without an error",
+  async (type) => {
+    mockStartSSOFlow.mockResolvedValue({
+      createdSessionId: null,
+      authSessionResult: { type },
+    });
+    const screen = render(
+      <PreferencesProvider>
+        <SignIn />
+      </PreferencesProvider>,
+    );
+    fireEvent.press(
+      screen.getByRole("button", { name: "Continue with Google" }),
+    );
+    await waitFor(() => expect(mockStartSSOFlow).toHaveBeenCalledTimes(1));
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: "Sign in or create an account" })
+          .props.accessibilityState.disabled,
+      ).toBe(false),
+    );
+    expect(
+      screen.queryByText(/Google sign-in needs additional verification/),
+    ).toBeNull();
+    expect(screen.queryByText(/Check your email, password or code/)).toBeNull();
+    expect(mockSignIn.finalize).not.toHaveBeenCalled();
+    expect(mockSignUp.finalize).not.toHaveBeenCalled();
+  },
+);
+
+test("incomplete Google signup is reported and never manually activated", async () => {
+  mockStartSSOFlow.mockResolvedValue({
+    createdSessionId: null,
+    authSessionResult: { type: "success" },
+    signUp: { status: "missing_requirements" },
+  });
+  const screen = native();
+  fireEvent.press(screen.getByRole("button", { name: "Continue with Google" }));
+  await screen.findByText(/Google sign-in needs additional verification/);
+  expect(mockSignIn.finalize).not.toHaveBeenCalled();
+  expect(mockSignUp.finalize).not.toHaveBeenCalled();
+});
+
+test("Expo Go shows why Google requires a custom build and does not launch OAuth", () => {
+  mockExecutionEnvironment = "storeClient";
+  const screen = render(
+    <PreferencesProvider>
+      <SignIn />
+    </PreferencesProvider>,
+  );
+  const button = screen.getByRole("button", { name: "Continue with Google" });
+  expect(button.props.accessibilityState.disabled).toBe(true);
+  fireEvent.press(button);
+  expect(mockStartSSOFlow).not.toHaveBeenCalled();
+  expect(
+    screen.getByText(/Google sign-in needs the Plantopedia development/),
+  ).toBeTruthy();
 });

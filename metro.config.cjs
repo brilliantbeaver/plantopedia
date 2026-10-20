@@ -7,6 +7,18 @@ module.exports = async () => {
   // Wait before serving the app so Clerk sign-in cannot mask a missing API.
   const phoneOrigin = await ensureDevelopmentServices(__dirname);
   const config = getDefaultConfig(__dirname);
+  // Expo 57's development env context discovers every .env* file, including
+  // custom secret profiles it cannot parse. Keep files out of the bundle graph;
+  // Expo CLI still loads env normally and injects only EXPO_PUBLIC_ values.
+  const existingBlockList = config.resolver.blockList;
+  config.resolver.blockList = [
+    ...(Array.isArray(existingBlockList)
+      ? existingBlockList
+      : existingBlockList
+        ? [existingBlockList]
+        : []),
+    /[/\\]\.env(?:\.[^/\\]*)?$/,
+  ];
   // A temporary tunnel changes on every launch. Invalidate previously inlined
   // public URLs rather than leaving a phone on yesterday's cached endpoint.
   if (phoneOrigin)

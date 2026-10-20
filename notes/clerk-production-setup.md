@@ -8,13 +8,13 @@ Updated 2026-10-19. Reuses the existing Clerk production instance, Vercel projec
 | ------------------------------ | ----------------------------------- | --------------------------------------------- |
 | Vercel server                  | `CLERK_SECRET_KEY`                  | Matching live key, stored as sensitive        |
 | Vercel server                  | `CLERK_PUBLISHABLE_KEY`             | Matching live publishable key                 |
-| Vercel server                  | `CLERK_ISSUER_URL`                  | `https://clerk.plantopedia-nine.vercel.app`   |
+| Vercel server                  | `CLERK_ISSUER_URL`                  | `https://plantopedia-nine.vercel.app/__clerk`   |
 | Vercel server and Clerk domain | `CLERK_PROXY_URL` / `proxy_url`     | `https://plantopedia-nine.vercel.app/__clerk` |
 | EAS production                 | `EXPO_PUBLIC_API_BASE_URL`          | `https://plantopedia-nine.vercel.app`         |
 | EAS production                 | `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` | Matching live publishable key                 |
 | EAS production                 | `EXPO_PUBLIC_CLERK_PROXY_URL`       | `https://plantopedia-nine.vercel.app/__clerk` |
 
-The issuer remains the token's original Clerk issuer, even when the Frontend API is proxied. Do not set it to the app origin or proxy path. Backend JWT verification fetches signing keys through Clerk's Backend API using the server secret; it does not require a DNS record for the issuer hostname.
+The issuer must exactly match a cryptographically verified session token's `iss` claim. This production instance issues `https://plantopedia-nine.vercel.app/__clerk`; its former `https://clerk.plantopedia-nine.vercel.app` setting rejected valid Google sessions. Do not infer the issuer from the publishable key's hostname or strip its proxy path. Backend JWT verification fetches signing keys through Clerk's Backend API using the server secret; it does not require a DNS record for the issuer hostname.
 
 `@clerk/expo` 4.11.0 and `@clerk/backend` 3.23.2 are pinned. The shared SDK includes production Vercel auto-proxy detection, but this app serves Express separately from Expo, so both sides explicitly configure the proxy. This is not Next.js; there is no Next.js middleware matcher. Express routes `/__clerk` and its descendants before JSON parsing and bearer authentication using the installed official `clerkFrontendApiProxy` handler. That handler streams bodies, preserves cookies and rewrites Clerk redirects. The adapter pins the upstream and public origin and takes the client IP from Vercel's ingress-owned header, rejecting requests without a valid trusted IP on Vercel. Local servers use the socket address.
 
@@ -26,7 +26,7 @@ Only schema-defined server settings were uploaded. Production overrides are `NOD
 
 For later changes, authenticate the CLI through `VERCEL_TOKEN` loaded from the ignored file in memory, verify the linked project, and supply each value through a pipe/stdin to `vercel env add NAME production --force --yes`. Use `--sensitive` for secrets and `--no-sensitive` for readable configuration. Do not interpolate secret values into shell commands, upload the entire file or pull production credentials into tracked source. A new deployment is required after environment changes.
 
-Only the three public values above were added to EAS production. Local `.env` gained the matching server publishable key and public proxy URL; its loopback API URL remains for local development. EAS builds use isolated committed source with `.env` excluded. Rebuild an installed native app to pick up changed public configuration.
+Only the three public values above were added to EAS production. Local `.env` gained the matching server publishable key and public proxy URL; its API URL now targets production for native testing. Use `npm run web:local` and `.env.clerk.local` for a paired development client and local API. EAS builds use isolated committed source with `.env` excluded. Rebuild an installed native app to pick up changed public configuration.
 
 ## Validation
 
@@ -41,7 +41,7 @@ Only the three public values above were added to EAS production. Local `.env` ga
 
 Live testing revealed that `/v1/client/hosted_auth` returns 403 `feature_not_enabled` for this production instance, including with the installed Expo SDK's native headers. Native API access and regular email/password/code endpoints work. The configured Account Portal URLs also use an `accounts.` subdomain; do not attempt to fix them with DNS records for `vercel.app`.
 
-The native app now uses in-app forms built with the current `useSignIn()` and `useSignUp()` APIs. It supports email/password signup, signup verification, password or email-code signin, and email-code password reset. It finalizes only complete authentication, requires verified reset codes before a new password, clears sensitive fields on mode changes, prevents concurrent submissions and adds a resend cooldown. Validation errors are displayed without logging credentials. Labels are localized in all seven app languages. Expo web continues to open Clerk's web modal. These flows work without the hosted-auth feature or a new native dependency.
+The native app now uses in-app forms built with the current `useSignIn()` and `useSignUp()` APIs. It supports email/password signup, signup verification, password or email-code signin, and email-code password reset. It finalizes only complete authentication, requires verified reset codes before a new password, clears sensitive fields on mode changes, prevents concurrent submissions and adds a resend cooldown. Validation errors are displayed without logging credentials. Labels are localized in all seven app languages. Expo web mounts Clerk's hash-routed SignIn at `/login` so callbacks can resume after a full-page redirect. These flows work without the hosted-auth feature or a new native dependency.
 
 Component regressions cover signup/code ordering, completed-session activation, rejection of unfinished authentication, reset ordering, validation errors and browser modal behavior. Installed-device acceptance still requires a native build with the production EAS environment. Additional MFA/session tasks, if enabled later, need corresponding UI; unfinished authentication is never treated as success.
 
@@ -52,3 +52,7 @@ Production on the chosen `vercel.app` host uses Clerk's shared `accounts.dev` em
 - [Clerk Frontend API proxy](https://clerk.com/docs/guides/dashboard/dns-domains/proxy-fapi)
 - [Vercel request headers](https://vercel.com/docs/headers/request-headers)
 - [Vercel environment variables](https://vercel.com/docs/environment-variables)
+
+## Google and localhost follow-up
+
+See [local and Google authentication](clerk-local-and-google.md). The native form now exposes Google using the Core 3 SSO hook and the allowlisted `plantopedia://sso-callback` redirect. Google requires an installed custom build; Expo Go retains email authentication. Production keys are restricted to the production browser domain and must not be used at localhost.

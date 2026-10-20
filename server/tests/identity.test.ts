@@ -31,6 +31,24 @@ test("real Clerk SDK verifies a locally signed token with a controlled public ke
     sessionId: "session_a",
   });
 });
+test("proxy-issued sessions require the exact configured proxy issuer", async () => {
+  const proxyIssuer = "https://app.example.com/__clerk";
+  const value = token({ iss: proxyIssuer });
+  expect(await verifyIdentity(value, { issuer: proxyIssuer, jwtKey })).toEqual({
+    uid: "user_a",
+    sessionId: "session_a",
+  });
+  for (const wrongIssuer of [
+    "https://app.example.com",
+    "https://clerk.app.example.com",
+    `${proxyIssuer}/`,
+    "https://another.example.com/__clerk",
+  ]) {
+    await expect(
+      verifyIdentity(value, { issuer: wrongIssuer, jwtKey }),
+    ).rejects.toMatchObject({ status: 401, code: "unauthorized" });
+  }
+});
 test("wrong signature, issuer, expiry, future validity and missing session are rejected", async () => {
   const foreign = generateKeyPairSync("rsa", {
     modulusLength: 2048,

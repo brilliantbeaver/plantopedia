@@ -49,7 +49,12 @@ const Env = z.object({
   CLERK_ISSUER_URL: z.string().refine((value) => {
     if (!URL.canParse(value)) return false;
     const url = new URL(value);
-    return url.protocol === "https:" && value === url.origin;
+    // Clerk's production proxy can itself be the signed token issuer.
+    // Preserve exact matching; never strip the path from a token's iss claim.
+    return (
+      url.protocol === "https:" &&
+      (value === url.origin || value === `${url.origin}/__clerk`)
+    );
   }),
   PLANTNET_API_KEY: optional,
   PLANTNET_PROJECT: z
@@ -89,7 +94,7 @@ export function parseConfig(
       ...new Set(result.error.issues.map((issue) => issue.path.join("."))),
     ];
     const hint = invalid.includes("CLERK_ISSUER_URL")
-      ? "\nCLERK_ISSUER_URL must be the full HTTPS Clerk issuer, e.g. https://your-instance.clerk.accounts.dev (include https://; no trailing slash, path, query, or credentials). Use the issuer from the same Clerk instance as your keys."
+      ? "\nCLERK_ISSUER_URL must be the exact HTTPS Clerk token issuer, e.g. https://your-instance.clerk.accounts.dev or https://your-app.example/__clerk (no trailing slash, other path, query, or credentials). Use the verified iss claim from the same Clerk instance as your keys."
       : "";
     throw new Error(`Invalid configuration: ${invalid.join(", ")}${hint}`);
   }

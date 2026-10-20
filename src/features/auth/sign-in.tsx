@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { View } from "react-native";
 import { useSignIn, useSignUp } from "@clerk/expo";
+import { useSSO } from "@clerk/expo/experimental";
+import Constants, { ExecutionEnvironment } from "expo-constants";
 import { z } from "zod";
 import { Action, Copy, Field } from "../../components/ui";
 import { usePreferences } from "../../theme/preferences";
@@ -18,6 +20,7 @@ async function checked(result: Promise<Result>) {
 export function SignIn() {
   const { signIn } = useSignIn();
   const { signUp } = useSignUp();
+  const { startSSOFlow } = useSSO();
   const { t } = usePreferences();
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<Mode>("signIn");
@@ -29,6 +32,8 @@ export function SignIn() {
   const [busy, setBusy] = useState(false);
   const [cooldown, setCooldown] = useState(0);
   const locked = useRef(false);
+  const isExpoGo =
+    Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
   useEffect(() => {
     if (!cooldown) return;
     const timer = setTimeout(() => setCooldown(cooldown - 1), 1000);
@@ -123,8 +128,51 @@ export function SignIn() {
     setCode("");
     setCooldown(0);
   }
+  async function googleSignIn() {
+    // Expo Go cannot register our OAuth callback scheme. Never send an exp://
+    // callback or a changing LAN address to the production redirect allowlist.
+    if (isExpoGo) return;
+    await checked(signIn.reset());
+    await checked(signUp.reset());
+    setPassword("");
+    setCode("");
+    const result = await startSSOFlow({
+      strategy: "oauth_google",
+      redirectUrl: "plantopedia://sso-callback",
+    });
+    if (
+      result.authSessionResult?.type === "cancel" ||
+      result.authSessionResult?.type === "dismiss"
+    )
+      return;
+    // The Core 3 hook finalizes completed sessions itself. Do not activate an
+    // unfinished signup/MFA attempt or treat an unloaded SDK as success.
+    if (
+      !result.createdSessionId &&
+      !result.signIn?.existingSession &&
+      !result.signUp?.existingSession
+    )
+      setError(t("authGoogleIncomplete"));
+  }
   if (!open)
-    return <Action title={t("signIn")} onPress={() => setOpen(true)} />;
+    return (
+      <View style={{ gap: 12 }}>
+        <Action
+          title={t("authGoogle")}
+          disabled={isExpoGo}
+          busy={busy}
+          onPress={() => void run(googleSignIn)}
+        />
+        {isExpoGo ? <Copy muted>{t("authGoogleBuild")}</Copy> : null}
+        <Action
+          title={t("signIn")}
+          secondary
+          disabled={busy}
+          onPress={() => setOpen(true)}
+        />
+        {error ? <Copy>{error}</Copy> : null}
+      </View>
+    );
   const label =
     mode === "signUp"
       ? t("authCreate")
@@ -134,6 +182,17 @@ export function SignIn() {
   return (
     <View style={{ gap: 12 }}>
       <Copy large>{label}</Copy>
+      {stage === "details" && mode !== "reset" ? (
+        <>
+          <Action
+            title={t("authGoogle")}
+            secondary
+            disabled={isExpoGo || busy}
+            onPress={() => void run(googleSignIn)}
+          />
+          {isExpoGo ? <Copy muted>{t("authGoogleBuild")}</Copy> : null}
+        </>
+      ) : null}
       {stage === "details" ? (
         <>
           <Field

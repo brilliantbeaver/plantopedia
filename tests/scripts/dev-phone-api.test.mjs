@@ -52,7 +52,7 @@ test("phone tunnels require an explicit opt-in and a real local Expo start", () 
   );
 });
 
-test("only the verified ephemeral URL reaches the bundle; the local API gets its exact native origin", async () => {
+test("only the verified ephemeral URL updates the public environment; the local API gets its exact native origin", async () => {
   const env = { ...base, WEB_ALLOWED_ORIGINS: "https://web.example.com" };
   const events = [];
   const origin = await startPhoneApi({
