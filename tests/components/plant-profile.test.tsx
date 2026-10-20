@@ -6,6 +6,7 @@ import {
   within,
 } from "@testing-library/react-native";
 import { Modal } from "react-native";
+import { PlantDetail, type Identification } from "@plantopedia/contracts";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { PreferencesProvider } from "../../src/theme/preferences";
 import PlantProfile from "../../src/app/plants/[plantId]";
@@ -16,6 +17,7 @@ const mockApi = {
   observe: jest.fn(),
   startConversation: jest.fn(),
   request: jest.fn(),
+  identify: jest.fn(),
 };
 const mockLocal = {
   cache: jest.fn(async () => {}),
@@ -40,33 +42,57 @@ jest.mock("../../src/services/local", () => ({
 jest.mock("../../src/components/PrivatePhoto", () => ({
   PrivatePhoto: () => null,
 }));
-jest.mock("../../src/features/identification/IdentificationPanel", () => ({
-  IdentificationPanel: () => null,
-}));
 jest.mock("../../src/theme/GlassSurface", () =>
   jest.requireActual("../../src/theme/GlassSurface.tsx"),
 );
 jest.mock("../../src/theme/use-reduced-motion", () => ({
   useReducedMotion: () => true,
 }));
-beforeEach(() => {
-  jest.clearAllMocks();
-  mockApi.observe.mockReset();
-  mockApi.startConversation.mockReset();
-  mockApi.request.mockReset();
-  mockApi.plant.mockResolvedValue({
+const stamp = {
+  schemaVersion: 1,
+  revision: 1,
+  createdAt: "2026-10-19T10:00:00.000Z",
+  updatedAt: "2026-10-19T10:00:00.000Z",
+};
+function fixture() {
+  return PlantDetail.parse({
     plant: {
+      ...stamp,
       id: "plant_a",
       nickname: "Patio rose",
       ownership: "owned",
       coverPhotoId: "photo_a",
       place: "",
+      lifecycle: "saved",
+      verification: "uncertain",
+      scientificName: null,
+      commonName: null,
+      identificationId: null,
     },
-    photos: [{ id: "photo_a" }, { id: "photo_b" }],
+    photos: ["photo_a", "photo_b"].map((id) => ({
+      ...stamp,
+      id,
+      plantId: "plant_a",
+      observationId: "observation_a",
+      mime: "image/jpeg",
+      width: 800,
+      height: 600,
+      bytes: 1000,
+      hash: id,
+      capturedAt: stamp.createdAt,
+    })),
     observations: [],
     selections: [],
     identifications: [],
   });
+}
+beforeEach(() => {
+  jest.clearAllMocks();
+  mockApi.observe.mockReset();
+  mockApi.startConversation.mockReset();
+  mockApi.request.mockReset();
+  mockApi.identify.mockReset();
+  mockApi.plant.mockResolvedValue(fixture());
 });
 function show() {
   const query = new QueryClient({
@@ -87,6 +113,107 @@ function show() {
     query.clear();
   };
 }
+
+test("a saved camera photo reaches identification and selection without ES2023 array methods or cache mutation", async () => {
+  expect(Array.prototype.toSorted).toBeUndefined();
+  let detail = fixture();
+  detail.observations = ["Older note", "Newer note"].map((text, index) => ({
+    ...stamp,
+    schemaVersion: 1,
+    id: `observation_${index}`,
+    plantId: "plant_a",
+    text,
+    kind: "user_observation",
+    capturedAt: `2026-10-${18 + index}T10:00:00.000Z`,
+  }));
+  Object.freeze(detail.observations);
+  Object.freeze(detail.identifications);
+  Object.freeze(detail.selections);
+  const result: Identification = {
+    ...stamp,
+    schemaVersion: 1,
+    id: "identification_a",
+    plantId: "plant_a",
+    photoIds: ["photo_a"],
+    provider: "plantnet",
+    providerVersion: "fixture",
+    status: "ready",
+    needsMoreEvidence: false,
+    language: "en",
+    candidates: [
+      {
+        scientificName: "Rosa canina",
+        commonNames: ["Dog rose"],
+        score: 0.2,
+        authorship: "",
+        taxonId: null,
+      },
+      {
+        scientificName: "Rosa gallica",
+        commonNames: ["French rose"],
+        score: 0.9,
+        authorship: "",
+        taxonId: null,
+      },
+    ],
+  };
+  Object.freeze(result.candidates);
+  mockApi.plant.mockResolvedValue(detail);
+  mockApi.identify.mockImplementation(async () => {
+    detail = { ...detail, identifications: [result] };
+    Object.freeze(detail.identifications);
+    mockApi.plant.mockResolvedValue(detail);
+    return result;
+  });
+  mockApi.request.mockImplementation(async () => {
+    detail = {
+      ...detail,
+      plant: {
+        ...detail.plant,
+        revision: 2,
+        identificationId: result.id,
+        scientificName: "Rosa gallica",
+        commonName: "French rose",
+        verification: "user_confirmed",
+      },
+    };
+    mockApi.plant.mockResolvedValue(detail);
+    return detail.plant;
+  });
+  const close = show();
+  await screen.findByText("Patio rose");
+  expect(
+    screen
+      .getAllByText(/^(Older|Newer) note$/)
+      .map((node) => node.props.children),
+  ).toEqual(["Newer note", "Older note"]);
+  expect(detail.observations.map((item) => item.text)).toEqual([
+    "Older note",
+    "Newer note",
+  ]);
+  fireEvent.press(screen.getByRole("button", { name: "Identify from photos" }));
+  expect(screen.getByRole("checkbox", { name: "Photo 1" })).toBeChecked();
+  fireEvent.press(screen.getByRole("button", { name: "Find matches" }));
+  const choice = await screen.findByRole("button", {
+    name: "Use this match: Rosa gallica",
+  });
+  expect(mockApi.identify).toHaveBeenCalledWith(
+    "plant_a",
+    { photoIds: ["photo_a"], organs: ["auto"], locale: "en" },
+    expect.any(String),
+  );
+  fireEvent.press(choice);
+  await screen.findByRole("button", { name: "Edit identification" });
+  expect(mockApi.request.mock.calls[0]?.[2].body).toMatchObject({
+    identificationId: result.id,
+    candidateIndex: 1,
+  });
+  expect(result.candidates.map((item) => item.scientificName)).toEqual([
+    "Rosa canina",
+    "Rosa gallica",
+  ]);
+  close();
+});
 test("asking about a selected photo reports failure and then opens that photo's conversation", async () => {
   mockApi.startConversation
     .mockRejectedValueOnce(new Error("offline"))

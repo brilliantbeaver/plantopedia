@@ -91,9 +91,9 @@ export default function PlantProfile() {
   });
   const data = detail.data;
   const observations =
-    data?.observations.toSorted((a, b) =>
-      b.capturedAt.localeCompare(a.capturedAt),
-    ) ?? [];
+    data?.observations
+      .slice()
+      .sort((a, b) => b.capturedAt.localeCompare(a.capturedAt)) ?? [];
   return (
     <Screen>
       <PageHeader title={data?.plant.nickname ?? t("plants")} back />

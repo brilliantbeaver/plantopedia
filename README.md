@@ -259,7 +259,7 @@ For a loopback API such as `http://127.0.0.1:3001`, this starts a managed API an
 | Preview or action | In the running Expo terminal |
 | --- | --- |
 | Browser on this Mac | Press `w` to open the web preview at `http://localhost:8081`. |
-| Matching SDK 57 Expo Go | With **Using Expo Go** shown in the terminal, scan its QR code with the iPhone Camera and open the suggested link. This is the default target. If Safari shows **Choose an app**, tap **Expo Go**. Text/photos and hosted sign-in are available; continuous native Voice Chat needs the custom development client. |
+| Matching SDK 57 Expo Go | With **Using Expo Go** shown in the terminal, scan its QR code with the iPhone Camera and open the suggested link. This is the default target. If Safari shows **Choose an app**, tap **Expo Go**. Text/photos and email sign-in are available; Google OAuth and continuous native Voice Chat need the custom development client. |
 | Installed Plantopedia development client | Run `npm run start:dev-client`, or press `s` until the terminal shows **development build**, then scan its QR code. The matching custom build must already be installed. |
 | Return to the development client | Press `s` again and scan the updated QR code. |
 | Reload or stop | Press `r` to reload connected apps, `?` for more shortcuts, or Ctrl-C once to stop Metro and its managed API. |
@@ -276,7 +276,7 @@ Browser sign-in mounts Clerk's hash-routed form with account creation enabled so
 
 ### First native install or native dependency changes
 
-For continuous Voice Chat on a phone, build and install a development client containing the local `PlantopediaVoice` module. Browser and Expo Go previews can start before this step. Choose the command for your phone; these create cloud builds, not additional Metro servers:
+For Google OAuth and continuous Voice Chat on a phone, build and install a development client containing the app’s `plantopedia` callback scheme and the local `PlantopediaVoice` module. Browser and Expo Go previews can start before this step. Choose the command for your phone; these create cloud builds, not additional Metro servers:
 
 ```bash
 # Android development APK:
@@ -285,6 +285,14 @@ npm run build:mobile -- build --profile development --platform android
 # Signed iPhone development build (Apple signing/provisioning required):
 npm run build:mobile -- build --profile development --platform ios
 ```
+
+After registering an additional iPhone or iPad, the old app build still excludes that device. Re-sign it with an updated ad hoc provisioning profile:
+
+```bash
+npm run ios:resign -- --id <existing-device-build-id> --wait
+```
+
+Select the intended registered devices when prompted, then install from the **new** EAS build link. This command pins the project's EAS CLI version and the internal development profile; it does not upload the working tree or require a full native rebuild. See [iOS installation troubleshooting](notes/ios-installation.md).
 
 Install the returned artifact, then use the same [everyday startup](#everyday-startup-one-expo-server) and select the development-client target. A compatible installed client can be reused across JavaScript-only changes.
 

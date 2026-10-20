@@ -1,5 +1,8 @@
 const en = {
   authSignIn: "Sign in",
+  authIntro:
+    "Discover a plant. Keep its story. Grow your knowledge, one photo at a time.",
+  authPrivate: "Your plant collection stays private.",
   authGoogle: "Continue with Google",
   authGoogleBuild:
     "Google sign-in needs the Plantopedia development or installed app. In Expo Go, use email sign-in below.",
@@ -29,6 +32,9 @@ export const authCopy: Record<
   en,
   fr: {
     authSignIn: "Se connecter",
+    authIntro:
+      "Découvrez une plante. Gardez son histoire. Apprenez, une photo à la fois.",
+    authPrivate: "Votre collection de plantes reste privée.",
     authGoogle: "Continuer avec Google",
     authGoogleBuild:
       "La connexion Google nécessite une version de développement ou installée de Plantopedia. Dans Expo Go, utilisez votre e-mail.",
@@ -52,6 +58,9 @@ export const authCopy: Record<
   },
   es: {
     authSignIn: "Iniciar sesión",
+    authIntro:
+      "Descubre una planta. Guarda su historia. Aprende, una foto a la vez.",
+    authPrivate: "Tu colección de plantas es privada.",
     authGoogle: "Continuar con Google",
     authGoogleBuild:
       "Google requiere la app instalada o de desarrollo de Plantopedia. En Expo Go, inicia sesión por correo.",
@@ -75,6 +84,9 @@ export const authCopy: Record<
   },
   de: {
     authSignIn: "Anmelden",
+    authIntro:
+      "Entdecke eine Pflanze. Bewahre ihre Geschichte. Lerne mit jedem Foto dazu.",
+    authPrivate: "Deine Pflanzensammlung bleibt privat.",
     authGoogle: "Mit Google fortfahren",
     authGoogleBuild:
       "Google benötigt die installierte Plantopedia-App oder einen Entwicklungsbuild. In Expo Go bitte E-Mail verwenden.",
@@ -98,6 +110,8 @@ export const authCopy: Record<
   },
   "zh-Hans": {
     authSignIn: "登录",
+    authIntro: "发现一株植物，记录它的故事。用每一张照片，探索更多植物知识。",
+    authPrivate: "你的植物收藏仅自己可见。",
     authGoogle: "使用 Google 继续",
     authGoogleBuild:
       "Google 登录需要 Plantopedia 开发版或已安装的应用。在 Expo Go 中请使用邮箱登录。",
@@ -120,6 +134,9 @@ export const authCopy: Record<
   },
   ja: {
     authSignIn: "ログイン",
+    authIntro:
+      "植物を見つけて、その物語を残そう。写真を一枚撮るたびに、新しい発見を。",
+    authPrivate: "植物コレクションは非公開です。",
     authGoogle: "Google で続行",
     authGoogleBuild:
       "Google ログインには Plantopedia の開発ビルドまたはインストール済みアプリが必要です。Expo Go ではメールでログインしてください。",
@@ -143,6 +160,9 @@ export const authCopy: Record<
   },
   ko: {
     authSignIn: "로그인",
+    authIntro:
+      "식물을 발견하고 이야기를 기록하세요. 사진 한 장마다 새로운 지식을 쌓아 보세요.",
+    authPrivate: "내 식물 컬렉션은 비공개로 유지됩니다.",
     authGoogle: "Google로 계속",
     authGoogleBuild:
       "Google 로그인은 Plantopedia 개발 빌드 또는 설치된 앱이 필요합니다. Expo Go에서는 이메일로 로그인하세요.",

@@ -1,5 +1,6 @@
 import { responseError } from "../services/api";
 import type { PrivatePhotoResource } from "./private-photo";
+import { throwIfAborted } from "./abort";
 
 export async function loadPrivatePhoto(
   uri: string,
@@ -16,7 +17,7 @@ export async function loadPrivatePhoto(
   });
   if (!response.ok) throw await responseError(response);
   const blob = await response.blob();
-  signal.throwIfAborted();
+  throwIfAborted(signal);
   const objectUrl = URL.createObjectURL(blob);
   return {
     source: { uri: objectUrl },

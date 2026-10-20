@@ -1,4 +1,5 @@
 import type { ImageURISource } from "react-native";
+import { throwIfAborted } from "./abort";
 
 export type PrivatePhotoResource = {
   source: ImageURISource;
@@ -10,7 +11,7 @@ export async function loadPrivatePhoto(
   token: string,
   signal: AbortSignal,
 ): Promise<PrivatePhotoResource> {
-  signal.throwIfAborted();
+  throwIfAborted(signal);
   return {
     source: {
       uri,

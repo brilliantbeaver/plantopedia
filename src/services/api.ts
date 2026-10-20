@@ -16,6 +16,7 @@ import {
 } from "@plantopedia/contracts";
 import { publicConfig } from "../config/public-env";
 import { phoneApiUnreachable } from "../platform/api-endpoint";
+import { throwIfAborted } from "../platform/abort";
 export class RequestError extends Error {
   constructor(
     public readonly status: number,
@@ -45,8 +46,10 @@ export async function responseError(response: {
 export function apiClient(getToken: () => Promise<string | null>) {
   let lifecycle = new AbortController();
   async function token() {
+    const signal = lifecycle.signal;
+    throwIfAborted(signal);
     const value = await getToken();
-    lifecycle.signal.throwIfAborted();
+    throwIfAborted(signal);
     return value;
   }
   async function request<T>(
@@ -61,6 +64,7 @@ export function apiClient(getToken: () => Promise<string | null>) {
   ): Promise<T> {
     if (!publicConfig.success)
       throw new RequestError(0, "configuration", false);
+    const lifecycleSignal = lifecycle.signal;
     const bearer = await token();
     if (!bearer) throw new RequestError(401, "unauthorized", false);
     const response = await fetch(
@@ -78,14 +82,14 @@ export function apiClient(getToken: () => Promise<string | null>) {
           ? { body: JSON.stringify(options.body) }
           : {}),
         signal: AbortSignal.any([
-          lifecycle.signal,
+          lifecycleSignal,
           options.signal ?? AbortSignal.timeout(27000),
         ]),
       },
     ).catch((error: unknown) => {
       // Do not reject a functioning simulator connection based on Metro's LAN
       // address. Explain loopback only after the request actually fails.
-      throw lifecycle.signal.aborted || options.signal?.aborted
+      throw lifecycleSignal.aborted || options.signal?.aborted
         ? error
         : connectionError(error);
     });
