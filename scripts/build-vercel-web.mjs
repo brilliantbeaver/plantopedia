@@ -1,17 +1,9 @@
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { vercelWebConfig } from "./vercel-web-config.mjs";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
-const publishableKey = process.env.CLERK_PUBLISHABLE_KEY;
-const proxyUrl = process.env.CLERK_PROXY_URL;
-if (!publishableKey?.startsWith("pk_live_") || !proxyUrl) {
-  throw new Error(
-    "Vercel web build requires production Clerk public key and proxy URL.",
-  );
-}
-const proxy = new URL(proxyUrl);
-if (proxy.protocol !== "https:" || proxy.pathname !== "/__clerk")
-  throw new Error("Expected the production HTTPS /__clerk proxy.");
+const { publishableKey, proxyUrl, apiBaseUrl } = vercelWebConfig();
 
 // Only public app configuration and the operating environment reach Expo.
 // Server secrets stay in the parent build/API environment.
@@ -24,7 +16,7 @@ Object.assign(env, {
   NODE_ENV: "production",
   CI: "1",
   EXPO_NO_DOTENV: "1",
-  EXPO_PUBLIC_API_BASE_URL: proxy.origin,
+  EXPO_PUBLIC_API_BASE_URL: apiBaseUrl,
   EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY: publishableKey,
   EXPO_PUBLIC_CLERK_PROXY_URL: proxyUrl,
 });

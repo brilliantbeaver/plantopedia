@@ -1,31 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "framework": "express",
+  "framework": null,
   "installCommand": "npm --prefix .. ci --include=dev",
-  "buildCommand": "node ../scripts/verify-vercel-web.mjs && npm --prefix .. run build:api",
-  "outputDirectory": "dist",
-  "redirects": [
-    { "source": "/", "destination": "/plants", "permanent": false }
-  ],
-  "rewrites": [
-    {
-      "source": "/(scan|plants|ask|settings|tasks|sso-callback|login)",
-      "destination": "/index.html"
-    },
-    {
-      "source": "/plants/:plantId",
-      "destination": "/index.html"
-    }
-  ],
-  "headers": [
-    {
-      "source": "/index.html",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "no-cache"
-        }
-      ]
-    }
-  ]
+  "buildCommand": "npm --prefix .. run build:vercel",
+  "outputDirectory": "public"
 }

@@ -38,4 +38,4 @@ The candidate passed API health/readiness checks before promotion. Its HTML-refe
 
 The local preview uses a development Clerk instance and has no running API, so its API-dependent screens show expected connection errors. Live production data was reviewed separately before the corrections. Full authenticated flows, real-device browsers, and dark-theme rendering have not been revalidated with the corrected deployment.
 
-The existing deployment workflow is still required: `npm run deploy:vercel` builds public assets before uploading. Its staged deployment uses `--skip-domain`; this release was then promoted explicitly. A plain Git-triggered deployment still cannot supply the ignored, locally generated web export.
+That release used a local pre-export workaround. The subsequent [clean-build correction](vercel-build-investigation.md) replaces it: Git and CLI now upload source and generate/package the web export in Vercel. `npm run deploy:vercel` still stages production with `--skip-domain` for acceptance before promotion.

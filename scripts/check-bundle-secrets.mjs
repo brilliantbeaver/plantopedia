@@ -52,6 +52,17 @@ async function scan(directory) {
       const data = await readFile(path);
       if (data.includes(sentinel))
         throw new Error("Private sentinel found in export");
+      if (item.name.endsWith(".map")) {
+        const map = JSON.parse(data.toString("utf8"));
+        if (
+          map.sources?.some((source) =>
+            /(?:^|\/)node_modules\/(?:braces|node-forge)\//.test(source),
+          )
+        )
+          throw new Error(
+            "Unpatched build-only dependency entered an app bundle",
+          );
+      }
     }
   }
 }
@@ -68,5 +79,5 @@ if (
 )
   throw new Error("Public config privacy check failed");
 console.log(
-  "iOS/Android/web JavaScript bundles, source maps and public Expo config contain no private sentinel. Native/EAS archives remain separate release checks.",
+  "iOS/Android/web JavaScript bundles, source maps and public Expo config contain no private sentinel; app source maps contain neither braces nor node-forge. Native/EAS archives remain separate release checks.",
 );

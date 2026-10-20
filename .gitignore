@@ -86,8 +86,7 @@ ui-debug.log*
 firebase/.cache/
 
 # Local Vercel project link, pulled configuration, and build output
-/.vercel/
+**/.vercel/
 
-# Generated Expo web export served by Vercel's Express CDN
-# Kept out of Git; deploy:vercel generates it and .vercelignore uploads it.
+# Generated Expo web export, rebuilt inside every Vercel deployment
 /server/public/

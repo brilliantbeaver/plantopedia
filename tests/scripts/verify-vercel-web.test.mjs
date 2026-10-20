@@ -13,7 +13,7 @@ import { spawnSync } from "node:child_process";
 
 const key = "pk_live_fixture";
 const proxy = "https://fixture.example/__clerk";
-const correct = `const config = ${JSON.stringify([key, proxy])};`;
+const correct = `const config = ${JSON.stringify([key, proxy, new URL(proxy).origin])};`;
 function verify(entry, unused, expectedKey = key) {
   const root = mkdtempSync(join(tmpdir(), "plantopedia-export-check-"));
   try {
@@ -27,6 +27,10 @@ function verify(entry, unused, expectedKey = key) {
     copyFileSync(
       new URL("../../scripts/verify-web-assets.mjs", import.meta.url),
       join(root, "scripts/verify-web-assets.mjs"),
+    );
+    copyFileSync(
+      new URL("../../scripts/vercel-web-config.mjs", import.meta.url),
+      join(root, "scripts/vercel-web-config.mjs"),
     );
     writeFileSync(
       join(publicDir, "index.html"),

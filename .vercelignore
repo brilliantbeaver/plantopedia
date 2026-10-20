@@ -7,6 +7,8 @@ node_modules/
 **/.env.*
 .expo/
 .vercel/
+**/.vercel/
+server/public/
 artifacts/
 coverage/
 dist/
@@ -24,7 +26,5 @@ android/
 **/*.jks
 **/*.mobileprovision
 
-# Unlike .gitignore, upload the generated public Expo assets.
-# Run npm run deploy:vercel to regenerate them before every deployment.
-# Metro exports dependency fonts/images under assets/vendor so upload filters
-# cannot mistake public assets for installed packages.
+# Git and CLI deployments upload source. Vercel generates and packages web
+# assets on its build machine; local exports and build outputs are excluded.

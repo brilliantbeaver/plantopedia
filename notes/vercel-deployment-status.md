@@ -1,6 +1,14 @@
 # Web and API production deployment — 2026-10-19
 
-## Latest release: UI display and exported assets
+## Source-only build correction
+
+The Git deployment failure came from verifying an ignored, locally generated web export before building it. Both Git and CLI now generate and package Expo assets and the compiled API in the cloud through Build Output API v3. A fresh Linux candidate, [`dpl_9M9Zrv6kEt6XR6aJXVzhyiTjL5bD`](https://vercel.com/brilliantbeaver/plantopedia/9M9Zrv6kEt6XR6aJXVzhyiTjL5bD), passes 16 route/status checks and exact-byte checks of all 26 exported files, including fonts, images and JavaScript. Health/readiness and the Clerk proxy return 200; unauthenticated API calls return 401; missing/private files return 404. A WebSocket handshake returns 101; this does not establish an authenticated voice conversation. The initial adapter candidate was rejected for incorrect HTTP status routing and was not promoted.
+
+The dependency audit is reduced from 65 findings to 50 high findings arising from two upstream advisories with no published fix. The API production audit is zero; packaging and all-platform bundle checks exclude both affected packages from the deployed app. All 457 tests, typecheck, lint, fresh source builds and bundle privacy checks pass. Preview services remain unconfigured and require the user's environment choice; production credentials were not copied into Preview. See [the complete investigation and remediation notes](vercel-build-investigation.md).
+
+The entries below record earlier deployments and their historical limitations.
+
+## Previous release: UI display and exported assets
 
 Deployed and promoted on 2026-10-20 UTC (2026-10-19 Pacific). The public site is [plantopedia-nine.vercel.app](https://plantopedia-nine.vercel.app), now serving [`dpl_Achehag4bPtm4BWKAHkjafoBQt5Z`](https://vercel.com/brilliantbeaver/plantopedia/Achehag4bPtm4BWKAHkjafoBQt5Z).
 

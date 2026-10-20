@@ -1,4 +1,4 @@
-import { fireEvent, render, waitFor } from "@testing-library/react-native";
+import { act, fireEvent, render, waitFor } from "@testing-library/react-native";
 import { PreferencesProvider } from "../../src/theme/preferences";
 /* eslint-disable import/no-duplicates */
 import { SignIn } from "../../src/features/auth/sign-in";
@@ -118,8 +118,12 @@ test("email-code sign-in rejects unfinished verification", async () => {
 });
 test("password reset verifies the code before accepting a new password", async () => {
   const screen = native();
-  fireEvent.press(screen.getByRole("button", { name: "Forgot password?" }));
-  await waitFor(() => expect(screen.queryByLabelText("Password")).toBeNull());
+  // Switching modes awaits both Clerk resets. Flush that interaction explicitly
+  // instead of racing React's scheduler against waitFor's timeout on CI.
+  await act(async () => {
+    fireEvent.press(screen.getByRole("button", { name: "Forgot password?" }));
+  });
+  expect(screen.queryByLabelText("Password")).toBeNull();
   fireEvent.changeText(screen.getByLabelText("Email"), "fixture@example.com");
   fireEvent.press(screen.getByRole("button", { name: "Reset password" }));
   await screen.findByLabelText("Verification code");

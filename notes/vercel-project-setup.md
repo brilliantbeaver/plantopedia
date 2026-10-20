@@ -11,13 +11,13 @@ Created 2026-10-18 and rechecked 2026-10-19 using `VERCEL_API_TOKEN` from the ig
 | Project ID | `prj_PTrfrfEkG0IP5JgN8jQjhGURDVsH` |
 | Intended existing repository | [`brilliantbeaver/plantopedia`](https://github.com/brilliantbeaver/plantopedia) |
 | Git connection | Connected to `brilliantbeaver/plantopedia`, production branch `main` |
-| Framework | Express |
+| Framework | `null` in source configuration; explicit Build Output API v3 with an Express HTTP-server function |
 | Root directory | `server` |
 | Include source outside root directory | Enabled for the root lockfile and `packages/contracts` workspace |
 | Node.js | `22.x`, matching the repository's engine constraint |
 | Install command | `npm --prefix .. ci --include=dev` (source configuration) |
-| Build command | `npm --prefix .. run build:api` |
-| Output directory | `dist` (source configuration) |
+| Build command | `npm --prefix .. run build:vercel` |
+| Output directory | `public`; the build emits `server/.vercel/output` with static assets and the traced API |
 | Development command | `npm run dev` (runs from `server`) |
 | Fluid compute | Enabled |
 | Function region | `iad1` (default; align with the Firebase database before deployment) |
@@ -37,7 +37,7 @@ The failed deployment reported `No entrypoint found which imports express. Found
 
 - `src/server.ts` now directly imports Express, composes the existing API, attaches its voice WebSocket handler, and default-exports the unbound HTTP server. It starts no standalone worker or process lifecycle handlers.
 - `src/index.ts` retains the persistent-process listener, five-second worker and shutdown behavior, using that same server. Existing `dev:api`, `start:api` and Expo-managed startup commands continue to use it.
-- `server/vercel.json` selects the Express preset, installs the root workspaces including build-time development dependencies, runs the existing strict contracts/API compilation, and selects `dist` as the output directory. Vercel detects `dist/server.js` there. Installing development dependencies explicitly keeps TypeScript available when `NODE_ENV=production`.
+- The initial fix selected the Express preset and compiled `dist/server.js`. The current `server/vercel.json` instead installs the root workspaces including build-time development dependencies and runs the complete web/API build. Its output adapter explicitly packages `server/dist/server.js` and generated static files, avoiding preset discovery before the web export exists. Installing development dependencies explicitly keeps TypeScript available when `NODE_ENV=production`. See [the clean-build investigation](vercel-build-investigation.md).
 - Packaging compiled JavaScript avoids a second Vercel TypeScript compilation pass. The installed CLI's TypeScript pass produced a Helmet default-import type error even though the normal NodeNext compiler passed; selecting the already-compiled output resolved that additional build failure without weakening type checking or changing Helmet's security headers.
 
 Commit and push the changed source and `server/vercel.json` before retrying a Git deployment. Redeploying the earlier failed commit alone cannot include this fix. Keep the project's Root Directory set to `server` and outside-root workspace source access enabled.

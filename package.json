@@ -50,6 +50,7 @@
     "@types/react": "~19.2.2",
     "@types/supertest": "7.2.1",
     "@types/ws": "8.18.2",
+    "@vercel/nft": "1.11.0",
     "eslint": "9.39.5",
     "eslint-config-expo": "57.0.2",
     "jest": "29.7.0",
@@ -62,7 +63,7 @@
     "typescript-eslint": "8.71.2"
   },
   "scripts": {
-    "postinstall": "node scripts/patch-expo-json-file.mjs && node scripts/patch-teeny-request.mjs && node scripts/patch-expo-launch-target.mjs",
+    "postinstall": "node scripts/patch-expo-json-file.mjs && node scripts/patch-teeny-request.mjs && node scripts/patch-expo-launch-target.mjs && node scripts/patch-query-string.mjs",
     "start": "expo start --go",
     "start:dev-client": "expo start --dev-client",
     "start:preview": "expo start --go",
@@ -72,6 +73,7 @@
     "android": "node scripts/eas-build.mjs build --profile development --platform android",
     "build:contracts": "npm run build -w @plantopedia/contracts",
     "build:api": "npm run build:contracts && npm run build -w @plantopedia/server",
+    "build:vercel": "npm run build:contracts && node scripts/build-vercel-web.mjs && node scripts/verify-vercel-web.mjs && npm run build -w @plantopedia/server && node scripts/package-vercel-output.mjs",
     "start:api": "npm run start -w @plantopedia/server",
     "dev:api": "npm run dev -w @plantopedia/server",
     "typecheck": "npm run build:contracts && tsc --noEmit && npm run typecheck -w @plantopedia/server",
@@ -88,6 +90,15 @@
     "deploy:vercel": "node scripts/deploy-vercel.mjs",
     "build:mobile": "node scripts/eas-build.mjs",
     "ios:resign": "npx eas-cli@24.8.0 build:resign --platform ios --target-profile development"
+  },
+  "overrides": {
+    "query-string": {
+      "decode-uri-component": "0.5.0"
+    },
+    "js-yaml": "4.3.2",
+    "xcode": {
+      "uuid": "11.1.1"
+    }
   },
   "private": true,
   "plantopedia": {
