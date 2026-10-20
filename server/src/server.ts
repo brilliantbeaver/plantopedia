@@ -14,7 +14,7 @@ import { createVoice } from "./providers/voice.js";
 import { fakeProviders } from "./providers/fakes.js";
 import { createTracer } from "./telemetry/tracer.js";
 
-// Vercel detects this conventional entrypoint by its direct Express import.
+// The Vercel output adapter packages this compiled entrypoint explicitly.
 // Importing it constructs the HTTP/WebSocket server without owning a port,
 // background worker, process signal handler, or process exit.
 const config = loadConfig();

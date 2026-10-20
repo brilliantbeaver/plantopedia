@@ -1,0 +1,35 @@
+name: Validate
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.23.1
+          cache: npm
+      - run: npm install --global npm@12.0.2
+      - run: npm ci --include=dev
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test
+      - name: Audit deployed API dependencies
+        run: npm audit --workspace @plantopedia/server --omit=dev
+      - name: Build complete Vercel output from a fresh checkout
+        run: npm run build:vercel
+        env:
+          # Public, nonfunctional fixtures: CI compiles assets without credentials.
+          CLERK_PUBLISHABLE_KEY: pk_live_Zml4dHVyZS5jbGVyay5leGFtcGxlLmludmFsaWQk
+          CLERK_PROXY_URL: https://fixture.example.invalid/__clerk
+      - name: Check all platform bundles for private configuration
+        run: npm run test:bundle-secrets

@@ -22,6 +22,8 @@ module.exports = async () => {
         ? [existingBlockList]
         : []),
     /[/\\]\.env(?:\.[^/\\]*)?$/,
+    // Packaged functions contain duplicate workspace manifests and dependencies.
+    /[/\\]\.vercel[/\\].*/,
   ];
   // A temporary tunnel changes on every launch. Invalidate previously inlined
   // public URLs rather than leaving a phone on yesterday's cached endpoint.

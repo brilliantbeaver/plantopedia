@@ -240,7 +240,7 @@ See [local and Google authentication](notes/clerk-local-and-google.md) for setup
 
 ### Deploy the web app and API to Vercel
 
-With production settings in `.env` and this checkout linked to the existing Vercel project, run `npm run deploy:vercel -- --yes`. The command generates the public web assets before upload and stages the production deployment. Check its returned URL with `vercel curl`, then assign the public domain with `vercel alias set`. See [the deployment instructions](notes/clerk-local-and-google.md#vercel-web-deployment). This publishes the browser app and API; installed mobile apps use a separate EAS build.
+With this checkout linked to the existing Vercel project, run `npm run deploy:vercel -- --yes`. Both CLI and Git deployments build from source using the environment configured in Vercel: install the locked dependencies, compile contracts, export and verify Expo web, compile the API, then package static files and traced API dependencies. Local `.env` and generated assets are not required or uploaded. The CLI command stages production without moving its domain; check the returned URL with `vercel curl`, then promote it with `vercel promote`. See [the deployment instructions](notes/clerk-local-and-google.md#vercel-web-deployment) and [build investigation](notes/vercel-build-investigation.md). This publishes the browser app and API; installed mobile apps use a separate EAS build.
 
 ### Everyday startup: one Expo server
 
