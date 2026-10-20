@@ -20,6 +20,8 @@ The account name in the deployment log does not establish an account or permissi
 
 `npm run deploy:vercel -- --yes` stages a production candidate without moving the public domain. Vercel production environment variables are the source of truth. Local `.env` and prebuilt web assets are unnecessary. After acceptance checks, use `vercel promote <deployment-url>`.
 
+For repeatable acceptance, build the same revision with matching public configuration locally, then run `node scripts/check-vercel-deployment.mjs https://<deployment-host>`. This uses the CLI's protection-aware requests and compares every exported file byte-for-byte. It also checks redirects without following them, all app routes, API readiness, the Clerk proxy, unauthorized API status and missing/private paths. A passing build alone is insufficient.
+
 ## What the audit actually reported
 
 The original **65 findings (15 moderate, 50 high)** were affected-package and parent-package entries arising from **five underlying advisories**. They were not 65 distinct vulnerabilities, and were not the command that stopped deployment.
