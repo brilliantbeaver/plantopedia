@@ -124,6 +124,7 @@ export const dictionary = {
   score: "服务商评分",
   timeline: "观察时间线",
   addNote: "添加观察",
+  photoUnavailable: "照片暂不可用",
   photo: "植物照片",
   permission: "允许使用相机拍摄植物，也可以选择已有照片。",
   allow: "允许相机",

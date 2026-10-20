@@ -139,6 +139,7 @@ export const dictionary = {
   score: "제공업체 점수",
   timeline: "관찰 이력",
   addNote: "관찰 추가",
+  photoUnavailable: "사진을 표시할 수 없습니다",
   photo: "식물 사진",
   permission: "카메라로 식물을 촬영하거나 기존 사진을 선택할 수 있어요.",
   allow: "카메라 허용",

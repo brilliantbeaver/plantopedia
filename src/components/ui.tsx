@@ -178,6 +178,14 @@ export function Action({
                 ? colors.danger
                 : "transparent",
           transform: [{ scale: pressed ? 0.98 : 1 }],
+          ...(focused && Platform.OS === "web"
+            ? {
+                outlineColor: colors.primary,
+                outlineStyle: "solid" as const,
+                outlineWidth: 2,
+                outlineOffset: 3,
+              }
+            : {}),
         },
         style,
       ]}

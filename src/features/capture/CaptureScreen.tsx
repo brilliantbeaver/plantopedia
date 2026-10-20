@@ -233,6 +233,7 @@ export function CaptureScreen() {
           <Image
             accessibilityLabel={t("photo")}
             source={{ uri: draft.original }}
+            resizeMode="contain"
             style={[styles.photo, { height: 210 }]}
           />
           <Copy muted>

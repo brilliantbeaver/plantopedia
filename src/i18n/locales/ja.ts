@@ -141,6 +141,7 @@ export const dictionary = {
   score: "提供元のスコア",
   timeline: "観察の履歴",
   addNote: "観察を追加",
+  photoUnavailable: "写真を表示できません",
   photo: "植物の写真",
   permission: "カメラで植物を撮影するか、写真を選択できます。",
   allow: "カメラを許可",

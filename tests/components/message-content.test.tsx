@@ -86,7 +86,11 @@ test("disclosure groups duplicate evidence, opens the exact plant, and reveals I
       expanded: true,
     }),
   ).toBeOnTheScreen();
-  expect(mockPhoto).toHaveBeenLastCalledWith({ plantId: "plant_a", photoId });
+  expect(mockPhoto).toHaveBeenLastCalledWith({
+    plantId: "plant_a",
+    photoId,
+    resizeMode: "contain",
+  });
   expect(screen.getAllByRole("button", { name: "View plant" })).toHaveLength(1);
   expect(
     screen.getByRole("button", { name: "Hydrangea reference" }),

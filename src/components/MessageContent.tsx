@@ -133,7 +133,11 @@ export function MessageContent({
               style={styles.content}
             >
               <Copy muted>{photo.label}</Copy>
-              <PrivatePhoto plantId={photo.plantId} photoId={photo.photoId} />
+              <PrivatePhoto
+                plantId={photo.plantId}
+                photoId={photo.photoId}
+                resizeMode="contain"
+              />
               <Action
                 secondary
                 title={t("details")}

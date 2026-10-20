@@ -139,6 +139,7 @@ export const en = {
   score: "Provider score",
   timeline: "Observation timeline",
   addNote: "Add observation",
+  photoUnavailable: "Photo unavailable",
   photo: "Plant photograph",
   permission:
     "Allow camera access to photograph plants. You can also choose a photo.",

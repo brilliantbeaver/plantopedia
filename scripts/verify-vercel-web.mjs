@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
+import { verifyWebAssets } from "./verify-web-assets.mjs";
 
 const publicDir = new URL("../server/public/", import.meta.url);
 try {
@@ -21,11 +22,13 @@ try {
     )
   )
     throw new Error("Export configuration does not match this environment");
+  const assets = verifyWebAssets(entries, publicDir);
   console.log(
-    "Uploaded Expo web export matches the production Clerk configuration.",
+    `Expo web export matches the production Clerk configuration; ${assets.length} referenced assets verified.`,
   );
-} catch {
+} catch (cause) {
   throw new Error(
     `Missing or stale web export in ${fileURLToPath(publicDir)}. Deploy using npm run deploy:vercel to build public assets before upload.`,
+    { cause },
   );
 }

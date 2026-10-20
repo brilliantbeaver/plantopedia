@@ -140,6 +140,7 @@ export const dictionary = {
   score: "Score du fournisseur",
   timeline: "Historique des observations",
   addNote: "Ajouter une observation",
+  photoUnavailable: "Photo indisponible",
   photo: "Photographie de plante",
   permission:
     "Autorisez l’appareil photo pour photographier des plantes, ou choisissez une photo.",

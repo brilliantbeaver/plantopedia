@@ -141,6 +141,7 @@ export const dictionary = {
   score: "Anbieterwert",
   timeline: "Beobachtungsverlauf",
   addNote: "Beobachtung hinzufügen",
+  photoUnavailable: "Foto nicht verfügbar",
   photo: "Pflanzenfoto",
   permission: "Erlaube die Kamera für Pflanzenfotos oder wähle ein Foto aus.",
   allow: "Kamera erlauben",

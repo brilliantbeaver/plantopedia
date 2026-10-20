@@ -7,6 +7,10 @@ module.exports = async () => {
   // Wait before serving the app so Clerk sign-in cannot mask a missing API.
   const phoneOrigin = await ensureDevelopmentServices(__dirname);
   const config = getDefaultConfig(__dirname);
+  config.transformer.assetPlugins = [
+    ...(config.transformer.assetPlugins ?? []),
+    require.resolve("./scripts/export-asset-paths.cjs"),
+  ];
   // Expo 57's development env context discovers every .env* file, including
   // custom secret profiles it cannot parse. Keep files out of the bundle graph;
   // Expo CLI still loads env normally and injects only EXPO_PUBLIC_ values.

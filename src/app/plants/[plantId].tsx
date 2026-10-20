@@ -136,6 +136,7 @@ export default function PlantProfile() {
               <PrivatePhoto
                 plantId={id}
                 photoId={selected ?? data.plant.coverPhotoId ?? ""}
+                resizeMode="contain"
                 style={{ height: 260, borderRadius: 26 }}
               />
             </View>
