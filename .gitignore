@@ -3,6 +3,11 @@
 # dependencies
 node_modules/
 
+# Local tool caches
+.cache/
+.eslintcache
+.prettiercache
+
 # Expo
 .expo/
 dist/
@@ -11,12 +16,30 @@ expo-env.d.ts
 
 # Native
 .kotlin/
+.gradle/
+.cxx/
 *.orig.*
 *.jks
+*.keystore
 *.p8
 *.p12
+*.pfx
 *.key
 *.mobileprovision
+*.provisionprofile
+
+# Downloaded/built native apps, archives, and debug symbols
+*.ipa
+*.apk
+*.aab
+*.app/
+*.xcarchive/
+*.dSYM/
+*.dSYM.zip
+
+# Local native module build output (keep modules/**/ios and android source)
+/modules/*/android/build/
+/modules/*/ios/build/
 
 # Metro
 .metro-health-check*
@@ -49,12 +72,22 @@ example
 **/*service-account*.json
 **/*serviceAccount*.json
 coverage/
+.nyc_output/
+# Bundles, screenshots, QA reports, device captures, and installation evidence
 artifacts/
 *.log
+*.log.[0-9]*
+# Firebase CLI deployment state and emulator logs (including rotated logs)
+.firebase/
+firebase-debug.log*
+firestore-debug.log*
+database-debug.log*
+ui-debug.log*
 firebase/.cache/
 
 # Local Vercel project link, pulled configuration, and build output
 /.vercel/
 
 # Generated Expo web export served by Vercel's Express CDN
+# Kept out of Git; deploy:vercel generates it and .vercelignore uploads it.
 /server/public/
