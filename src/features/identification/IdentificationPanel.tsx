@@ -48,9 +48,9 @@ export function IdentificationPanel({
       mounted.current = false;
     };
   }, []);
-  const latest = data.identifications.toSorted((a, b) =>
-    b.createdAt.localeCompare(a.createdAt),
-  )[0];
+  const latest = data.identifications
+    .slice()
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0];
   const chosenEvidence = data.identifications.find(
     (item) => item.id === data.plant.identificationId,
   );
@@ -68,7 +68,8 @@ export function IdentificationPanel({
   // A manually entered name never inherits a provider's score, even if the
   // string happens to match a candidate from another identification run.
   const chosenSelection = data.selections
-    .toSorted((a, b) => b.supersedesRevision - a.supersedesRevision)
+    .slice()
+    .sort((a, b) => b.supersedesRevision - a.supersedesRevision)
     .find(
       (item) =>
         item.identificationId === data.plant.identificationId &&
@@ -94,7 +95,7 @@ export function IdentificationPanel({
   const ranked =
     evidence?.candidates
       .map((candidate, index) => ({ candidate, index }))
-      .toSorted((a, b) => b.candidate.score - a.candidate.score) ?? [];
+      .sort((a, b) => b.candidate.score - a.candidate.score) ?? [];
 
   const identify = useMutation({
     retry: false,

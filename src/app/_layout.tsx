@@ -8,9 +8,9 @@ import { StatusBar } from "expo-status-bar";
 import { publicConfig } from "../config/public-env";
 import { webAuthConfigurationError } from "../config/web-auth";
 import { PreferencesProvider, usePreferences } from "../theme/preferences";
-import { Screen, Copy, Card, Feedback, styles } from "../components/ui";
+import { Screen, Copy, Feedback, styles } from "../components/ui";
 import { SessionProvider } from "../services/session";
-import { SignIn } from "../features/auth/sign-in";
+import { WelcomeScreen } from "../features/auth/WelcomeScreen";
 const query = new QueryClient({
   defaultOptions: {
     queries: { retry: 1, staleTime: 15000 },
@@ -19,31 +19,14 @@ const query = new QueryClient({
 });
 function AuthGate() {
   const { isLoaded, isSignedIn, userId } = useAuth();
-  const { t, mode } = usePreferences();
+  const { mode } = usePreferences();
   if (!isLoaded)
     return (
       <Screen>
         <Feedback loading />
       </Screen>
     );
-  if (!isSignedIn)
-    return (
-      <Screen>
-        <Copy large>Plantopedia</Copy>
-        <Copy muted>{t("tagline")}</Copy>
-        <Card>
-          <Image
-            source={require("../../assets/images/botanical.png")}
-            style={styles.photo}
-            accessible={false}
-          />
-          <Copy large>{t("welcome")}</Copy>
-          <Copy>{t("privacy")}</Copy>
-          <SignIn />
-        </Card>
-        <Copy muted>{t("ai")}</Copy>
-      </Screen>
-    );
+  if (!isSignedIn) return <WelcomeScreen />;
   return (
     <SessionProvider key={userId}>
       <StatusBar style={mode === "dark" ? "light" : "dark"} />

@@ -86,7 +86,8 @@
     "test:bundle-secrets": "node scripts/check-bundle-secrets.mjs",
     "deploy:api": "node scripts/deploy-heroku.mjs",
     "deploy:vercel": "node scripts/deploy-vercel.mjs",
-    "build:mobile": "node scripts/eas-build.mjs"
+    "build:mobile": "node scripts/eas-build.mjs",
+    "ios:resign": "npx eas-cli@24.8.0 build:resign --platform ios --target-profile development"
   },
   "private": true,
   "plantopedia": {

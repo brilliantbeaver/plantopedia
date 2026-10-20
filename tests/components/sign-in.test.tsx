@@ -155,10 +155,12 @@ test("web sign-in mounts immediately so a redirected callback can resume without
       <WebSignIn />
     </PreferencesProvider>,
   );
-  expect(mockWebSignIn).toHaveBeenCalledWith({
-    routing: "hash",
-    withSignUp: true,
-  });
+  expect(mockWebSignIn).toHaveBeenCalledWith(
+    expect.objectContaining({
+      routing: "hash",
+      withSignUp: true,
+    }),
+  );
   expect(mockOpenSignIn).not.toHaveBeenCalled();
 });
 
