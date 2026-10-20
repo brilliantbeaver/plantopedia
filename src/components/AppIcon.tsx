@@ -19,6 +19,13 @@ export function AppIcon({
       accessible={false}
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
+      style={{
+        width: size,
+        height: size,
+        flexShrink: 0,
+        alignItems: "center",
+        justifyContent: "center",
+      }}
     >
       <Ionicons name={name} size={size} color={color ?? colors.text} />
     </View>

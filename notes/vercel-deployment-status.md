@@ -1,5 +1,15 @@
 # Web and API production deployment — 2026-10-19
 
+## Latest release: UI display and exported assets
+
+Deployed and promoted on 2026-10-20 UTC (2026-10-19 Pacific). The public site is [plantopedia-nine.vercel.app](https://plantopedia-nine.vercel.app), now serving [`dpl_Achehag4bPtm4BWKAHkjafoBQt5Z`](https://vercel.com/brilliantbeaver/plantopedia/Achehag4bPtm4BWKAHkjafoBQt5Z).
+
+This release fixes missing icon fonts, clipped Clerk form borders, narrow-screen provider icons, private-photo loading/error display, photo cropping, and keyboard focus visibility. Exported dependency assets now use `assets/vendor` so Vercel upload exclusions cannot discard them. The earlier `assets/node_modules` exception did not reliably preserve the font in the subsequent production deployment.
+
+The normal cloud build completed successfully. The candidate passed health/readiness and artifact checks before promotion. After promotion, all five checked page routes, `/health`, and `/ready` returned 200; unauthenticated `/v1/plants` returned 401 and the private environment-file path returned 404. All 20 exported font/image files and the HTML-referenced JavaScript matched the verified local build. Local validation passed typecheck, lint, 131 component tests, and six export/deployment regression tests. See [the display review](ui-display-review.md) for coverage and remaining acceptance boundaries.
+
+## Previous authentication release
+
 The current Expo web and API revision was deployed and promoted to production successfully. Production Google login now creates an active session. A subsequent exact-issuer mismatch was fixed; real production-session requests now successfully read plants, conversations and preferences. The new production account is empty while the matching Development account owns the saved records; copying awaits the user’s choice. Full data/provider acceptance remains separate.
 
 | Item | Value |

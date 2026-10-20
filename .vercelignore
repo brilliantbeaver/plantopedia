@@ -26,7 +26,5 @@ android/
 
 # Unlike .gitignore, upload the generated public Expo assets.
 # Run npm run deploy:vercel to regenerate them before every deployment.
-# Expo preserves dependency directory names in exported asset URLs. These are
-# public font/image files, not installed packages; excluding them breaks icons.
-!server/public/assets/node_modules/
-!server/public/assets/node_modules/**
+# Metro exports dependency fonts/images under assets/vendor so upload filters
+# cannot mistake public assets for installed packages.

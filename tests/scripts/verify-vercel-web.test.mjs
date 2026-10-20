@@ -24,6 +24,10 @@ function verify(entry, unused, expectedKey = key) {
       new URL("../../scripts/verify-vercel-web.mjs", import.meta.url),
       join(root, "scripts/verify.mjs"),
     );
+    copyFileSync(
+      new URL("../../scripts/verify-web-assets.mjs", import.meta.url),
+      join(root, "scripts/verify-web-assets.mjs"),
+    );
     writeFileSync(
       join(publicDir, "index.html"),
       '<script src="/_expo/static/js/web/entry.js" defer></script>',

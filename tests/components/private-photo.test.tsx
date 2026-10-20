@@ -1,4 +1,10 @@
-import { act, render, screen, waitFor } from "@testing-library/react-native";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react-native";
 import { PrivatePhoto } from "../../src/components/PrivatePhoto";
 
 const mockToken = jest.fn();
@@ -7,7 +13,15 @@ jest.mock("../../src/services/session", () => ({
   useSessionApi: () => ({ api: mockApi }),
 }));
 jest.mock("../../src/theme/preferences", () => ({
-  usePreferences: () => ({ t: () => "Plant photograph" }),
+  usePreferences: () => ({
+    t: (key: string) =>
+      ({
+        photo: "Plant photograph",
+        loading: "Loading…",
+        photoUnavailable: "Photo unavailable",
+      })[key],
+    colors: { muted: "#eee", secondary: "#555", primary: "#166534" },
+  }),
 }));
 jest.mock("../../src/config/public-env", () => ({
   publicConfig: {
@@ -72,6 +86,25 @@ test("a rejected private response never becomes an image or a public URL fallbac
   expect(readBlob).not.toHaveBeenCalled();
   expect(mockCreate).not.toHaveBeenCalled();
   expect(screen.queryByLabelText("Plant photograph")).toBeNull();
+  expect(screen.getByLabelText("Photo unavailable")).toBeOnTheScreen();
+});
+
+test("a photo decode failure replaces the broken image with an accessible placeholder", async () => {
+  mockFetch.mockResolvedValue({
+    ok: true,
+    blob: async () => new Blob(["invalid image"]),
+  });
+  render(<PrivatePhoto plantId="plant_a" photoId="photo_a" />);
+  fireEvent(await screen.findByLabelText("Plant photograph"), "error");
+  expect(screen.queryByLabelText("Plant photograph")).toBeNull();
+  expect(screen.getByLabelText("Photo unavailable")).toBeOnTheScreen();
+});
+
+test("pending photos expose loading feedback without requesting a public URL", async () => {
+  mockToken.mockReturnValue(new Promise(() => {}));
+  render(<PrivatePhoto plantId="plant_a" photoId="photo_a" />);
+  expect(screen.getByLabelText("Loading…")).toBeOnTheScreen();
+  expect(mockFetch).not.toHaveBeenCalled();
 });
 
 test("unmount aborts an in-flight private photo and suppresses its late body", async () => {
