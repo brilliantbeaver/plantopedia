@@ -1,0 +1,172 @@
+{
+  "id": "02",
+  "slug": "components",
+  "title": "Build a card that adapts",
+  "subtitle": "Turn a plant record into a reusable, readable, accessible React Native component.",
+  "minutes": 45,
+  "stage": "Seedling",
+  "prerequisites": [
+    "You can describe the app’s runtime layers from lesson 01.",
+    "You can read an object and pass a function as an argument."
+  ],
+  "outcomes": [
+    "You can pass data and callbacks into a reusable component.",
+    "You can predict how row and column layouts change their main axis.",
+    "You can make a plant card usable with larger text and assistive technology."
+  ],
+  "intro": [
+    "A plant card seems simple until you try three names, a narrow phone, and a larger text setting. “Fern” fits almost anywhere. “Lemon tree beside the east balcony door” needs room. A useful component expresses the relationship between a photograph, a title, and an action while leaving enough freedom for real content.",
+    "In this lesson, the same card receives different plant summaries without copying its markup. You will connect the visible result to its inputs, explore layout rules, and check what a person using a screen reader or keyboard needs to understand the action. The browser lab models layout choices; confirm final React Native layout in Expo."
+  ],
+  "sections": [
+    {
+      "title": "Pass the record in, and report the action out",
+      "paragraphs": [
+        "Props are the named inputs a parent gives to a child component. A card might receive a nickname and a function to call when pressed. The parent still decides what selecting a plant means. This lets the card display a search result, a recent discovery, or a garden item without having to know which screen contains it.",
+        "The teaching type PlantSummary deliberately contains only id, nickname, and scientificName. It is a small display shape, not a replacement for the full Plant contract. A full saved record has revision information, timestamps, ownership, and other fields. Naming the teaching shape avoids suggesting that a three-field object can be sent anywhere the production contract expects a complete record.",
+        "Read the callback in the example carefully. onPress receives a function that will run later. Writing onPress={onSelect(plant.id)} would call the function while building the screen. Writing onPress={() => onSelect(plant.id)} waits for the reader’s press. A child should not change the object it receives; it should report the action to the owner of that information."
+      ],
+      "diagram": "components",
+      "code": {
+        "language": "tsx",
+        "filename": "Teaching component: PlantSummaryCard.tsx",
+        "text": "import { Pressable, StyleSheet, Text, View } from \"react-native\";\n\nexport type PlantSummary = {\n  id: string; nickname: string; scientificName: string | null;\n};\ntype Props = { plant: PlantSummary; onSelect: (id: string) => void };\nexport function PlantSummaryCard({ plant, onSelect }: Props) {\n  return (\n    <Pressable\n      accessibilityRole=\"button\"\n      accessibilityLabel={`Open ${plant.nickname}`}\n      onPress={() => onSelect(plant.id)}\n      style={({ pressed }) => [styles.card, { opacity: pressed ? 0.8 : 1 }]}\n    >\n      <View style={styles.mark}><Text accessible={false}>🌿</Text></View>\n      <View style={styles.copy}>\n        <Text style={styles.name}>{plant.nickname}</Text>\n        <Text>{plant.scientificName ?? \"Identification uncertain\"}</Text>\n      </View>\n    </Pressable>\n  );\n}\nconst styles = StyleSheet.create({\n  card: { flexDirection: \"row\", alignItems: \"center\", gap: 12,\n    padding: 16, borderRadius: 24, minHeight: 88,\n    backgroundColor: \"#E5FFF1\" },\n  mark: { width: 48, height: 48, alignItems: \"center\", justifyContent: \"center\" },\n  copy: { flex: 1, gap: 4 },\n  name: { fontSize: 20, fontWeight: \"700\", color: \"#12382B\" },\n});"
+      }
+    },
+    {
+      "title": "Use the two layout axes intentionally",
+      "paragraphs": [
+        "Each View arranges its own children. flexDirection chooses the main axis. With row, the children are arranged across the available width; with column, they are arranged down the available height. justifyContent distributes space along that main axis. alignItems controls alignment across the other axis. Changing the direction changes what “along” and “across” mean.",
+        "In the card, the marker has a fixed width because its decorative job is predictable. The text container uses flex: 1 so it can occupy remaining room. The text is not assigned a fixed height. That allows a long name to wrap and a larger system font to increase the card’s height. Setting the whole card to height: 88 would remove that freedom.",
+        "Numeric padding creates interior space. gap separates children. A border radius changes the corners, not the layout relationship. Start with these structural choices before adding glow or blur. If the label is clipped, increasing the shadow will not help. In the lab, change direction first and explain which axis changed, then reduce the available width and watch which content needs room."
+      ],
+      "diagram": "layout"
+    },
+    {
+      "title": "Render a list without losing the identity of its rows",
+      "paragraphs": [
+        "A reusable card becomes more valuable when a list creates one for each record. FlatList is designed for lists whose content can extend beyond the visible area. The list needs a stable key for each item so React can associate a rendered row with the same logical record when ordering or contents change.",
+        "Use the specimen’s id as that key. An array position is a description of where an item currently sits, not of which plant it is. If the first record is removed, every later array position changes. Two plants can also share a nickname or scientific name, so those labels are poor identity keys.",
+        "The second teaching file imports the display component and supplies two sample records. The callback shows an alert simply to make the press visible. Later, you will replace that response with navigation. The sample data does not come from a server and does not claim to persist. Keeping that boundary explicit makes the next lessons’ added responsibilities easier to see."
+      ],
+      "code": {
+        "language": "tsx",
+        "filename": "Teaching screen: PlantList.tsx",
+        "text": "import { Alert, FlatList, Text } from \"react-native\";\nimport { PlantSummaryCard, type PlantSummary } from \"./PlantSummaryCard\";\n\nconst examples: PlantSummary[] = [\n  { id: \"lemon_east\", nickname: \"East balcony lemon\", scientificName: null },\n  { id: \"lemon_west\", nickname: \"West window lemon\", scientificName: null },\n];\nexport default function PlantList() {\n  return (\n    <FlatList\n      data={examples}\n      keyExtractor={(plant) => plant.id}\n      contentContainerStyle={{ padding: 20, gap: 12 }}\n      renderItem={({ item }) => (\n        <PlantSummaryCard plant={item}\n          onSelect={(id) => Alert.alert(\"Selected specimen\", id)} />\n      )}\n      ListEmptyComponent={<Text>\n        Your first plant will appear here. Use Scan to add a specimen.\n      </Text>}\n    />\n  );\n}"
+      }
+    },
+    {
+      "title": "Make the action understandable without its decoration",
+      "paragraphs": [
+        "A screen reader needs to know what the card does. The Pressable has a button role and a label that includes the plant nickname. That label remains meaningful even if the decorative leaf is never announced. An icon by itself does not tell a reader whether pressing it opens details, marks a favorite, or deletes a record.",
+        "Give important actions enough room to operate. This card’s padding and minimum height make its press area much larger than the text alone. On the web, verify keyboard focus is visible and that the action works from the keyboard. On a phone, turn on the platform’s screen reader and listen to the label. A browser’s automated checks cannot substitute for that native reading order.",
+        "The current production PlantCard adds a separate options button and an accessibility action for removal. It does not rely only on the left-swipe gesture. That matters because a reader may never discover or be able to perform the gesture. When you add a gesture shortcut, preserve a clear alternative action. Keep delete separate from opening the card so the two purposes are not hidden behind the same label."
+      ],
+      "callout": {
+        "title": "Decoration must leave the words readable",
+        "text": "A vivid translucent surface still needs strong text contrast. Test the opaque fallback, longer names, large text, keyboard focus, and screen-reader labels before judging the card complete."
+      }
+    },
+    {
+      "title": "Separate a visual improvement from a new responsibility",
+      "paragraphs": [
+        "The repository’s real PlantCard uses the shared theme, translated copy, authenticated private photos, navigation, and deletion state. You can recognize the same outer structure in the smaller teaching component: a pressable surface, a picture area, and flexible details. Production behavior grows around that understandable structure rather than requiring a completely different mental model.",
+        "When reviewing your card, change one input at a time. Try a null scientificName, a long nickname, and two specimens with the same name. Then change text size and available width. Explain whether each result comes from the data, the layout, or the action callback. This habit makes debugging specific: “the text container needs room to grow” is actionable, while “the screen feels broken” is not."
+      ]
+    }
+  ],
+  "lab": {
+    "kind": "layout",
+    "title": "Give a long plant name room to grow",
+    "instructions": "Predict the main axis, then switch row and column. Adjust width and text size. Explain which element should stay fixed and which should use the remaining space."
+  },
+  "quiz": [
+    {
+      "question": "A card has flexDirection: \"row\". Which property distributes its children along that row?",
+      "options": [
+        "borderRadius",
+        "justifyContent",
+        "alignItems"
+      ],
+      "answer": 1,
+      "explanation": "justifyContent acts along the main axis, which row makes horizontal. alignItems works across that axis. A border radius changes corner shape and does not distribute children."
+    },
+    {
+      "question": "Why should two lemon-tree cards use different keys?",
+      "options": [
+        "Keys are decorative labels shown on screen.",
+        "Every card needs a new random key on every render.",
+        "Each key should identify its particular specimen even when the list changes."
+      ],
+      "answer": 2,
+      "explanation": "Stable specimen IDs let React associate each row with its logical record. Random keys destroy that continuity; a shared species label cannot distinguish the two trees."
+    },
+    {
+      "question": "What is the best response when a larger system font clips the nickname?",
+      "options": [
+        "Allow the text and card to grow and recheck the layout.",
+        "Disable font scaling everywhere.",
+        "Replace the nickname with an unlabeled icon."
+      ],
+      "answer": 0,
+      "explanation": "The content should remain readable at the reader’s preferred size. Flexible text space and minimum rather than fixed height preserve that room. Removing labels or disabling scaling avoids the symptom by removing access."
+    }
+  ],
+  "exercise": {
+    "title": "Create three cards from one component",
+    "brief": "Use the teaching card in a separate Expo learning copy and make its behavior understandable with short, long, and missing data.",
+    "steps": [
+      "Render three PlantSummary objects with stable, different IDs. Make two share the same scientific name.",
+      "Give one specimen a long nickname and another a null scientificName.",
+      "Supply one onSelect callback from the parent and show the selected ID.",
+      "Compare a narrow layout with a larger text setting and remove fixed heights that clip words.",
+      "Operate the card with assistive technology and, on web, a keyboard. Record the announced action and the visible focus behavior."
+    ],
+    "acceptance": [
+      "All three cards use the same component and preserve their separate IDs.",
+      "The uncertain-identification fallback appears for null data.",
+      "Long text wraps without hiding the action.",
+      "The card’s accessible name describes opening the named plant."
+    ],
+    "hint": "Treat the marker as fixed decoration and the text container as flexible content. The nullish-coalescing operator chooses a fallback for null or undefined.",
+    "solution": "Create one array of three objects and feed it to FlatList with keyExtractor={(plant) => plant.id}. Keep the text container at flex: 1, use minHeight on the card, and avoid a fixed height on either text element. Pass onSelect as a callback from the list. The shared species name affects the visible description, while the distinct id determines which specimen is selected."
+  },
+  "reflection": "If the same card appears in both Search and My Garden, which information should be passed as props and which decision should remain with the parent screen?",
+  "takeaways": [
+    "Props let one component display different records without copying its structure.",
+    "Layout direction determines the main axis; content needs room to respond to width and text size.",
+    "A stable record ID and an understandable action label solve different problems."
+  ],
+  "repo": [
+    {
+      "path": "src/components/PlantCard.tsx",
+      "why": "Shows the production row structure, navigation callback, flexible details, options action, and stable specimen data."
+    },
+    {
+      "path": "src/components/ui.tsx",
+      "why": "Collects reusable screens, buttons, typography, and feedback surfaces."
+    },
+    {
+      "path": "src/theme/preferences.tsx",
+      "why": "Supplies shared colors and translated words to components."
+    }
+  ],
+  "sources": [
+    {
+      "title": "React Native layout with Flexbox",
+      "url": "https://reactnative.dev/docs/flexbox"
+    },
+    {
+      "title": "React Native accessibility",
+      "url": "https://reactnative.dev/docs/accessibility"
+    },
+    {
+      "title": "React Native FlatList",
+      "url": "https://reactnative.dev/docs/flatlist"
+    },
+    {
+      "title": "Passing props to a component",
+      "url": "https://react.dev/learn/passing-props-to-a-component"
+    }
+  ]
+}

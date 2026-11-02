@@ -1,0 +1,182 @@
+{
+  "id": "04",
+  "slug": "state",
+  "title": "Let the screen remember",
+  "subtitle": "Use state, immutable updates, reducers, and context without creating competing copies of the same fact.",
+  "minutes": 55,
+  "stage": "Roots",
+  "prerequisites": [
+    "You can build a component from props and call an event callback.",
+    "You can follow map and filter on JavaScript arrays."
+  ],
+  "outcomes": [
+    "You can predict the result of repeated state updates in one event.",
+    "You can update one item in an array without changing the previous array.",
+    "You can choose local state, lifted state, context, or a reducer for a concrete job."
+  ],
+  "intro": [
+    "A plant card becomes interactive when the screen remembers something: whether its menu is open, what the reader has typed, or which photo is selected. A plain local variable does not give React a reliable instruction to display a new result. State connects an event to the next screen description.",
+    "The goal is not to place every value in a large global store. The goal is to give each fact a clear owner. Plantopedia uses small local values for screen interaction, context for shared preferences and session services, and TanStack Query for server records. This lesson teaches the first two responsibilities and prepares you to recognize the third."
+  ],
+  "sections": [
+    {
+      "title": "A state value belongs to one render",
+      "paragraphs": [
+        "useState returns the value for the current render and a setter that requests an update. The current event handler continues to see that render’s value even after calling the setter. If count is 0, two calls to setCount(count + 1) both request the value 1. They do not make the count variable become 1 between the calls.",
+        "When the next value depends on the previous queued value, pass an updater function. Two calls to setCount(previous => previous + 1) produce 2 from 0 because each updater receives the result of the preceding update. The teaching component places the two choices side by side so you can predict the result before pressing either button.",
+        "Both methods are useful when their intention is clear. A direct setter can replace a value with a chosen nickname. An updater is useful when building from what is already there. Do not depend on an immediate console log after the setter to show the next render’s state. Read the rendered result or inspect the subsequent render instead."
+      ],
+      "diagram": "state",
+      "code": {
+        "language": "tsx",
+        "filename": "Teaching component: SnapshotCounter.tsx",
+        "text": "import { useState } from \"react\";\nimport { Button, Text, View } from \"react-native\";\n\nexport default function SnapshotCounter() {\n  const [count, setCount] = useState(0);\n  return (\n    <View style={{ padding: 24, gap: 16 }}>\n      <Text accessibilityLiveRegion=\"polite\">Count: {count}</Text>\n      <Button title=\"Queue two replacements\" onPress={() => {\n        setCount(count + 1);\n        setCount(count + 1);\n      }} />\n      <Button title=\"Queue two updaters\" onPress={() => {\n        setCount(previous => previous + 1);\n        setCount(previous => previous + 1);\n      }} />\n      <Button title=\"Reset\" onPress={() => setCount(0)} />\n    </View>\n  );\n}"
+      }
+    },
+    {
+      "title": "Keep one source for the fact you already know",
+      "paragraphs": [
+        "Suppose a note editor stores text and also stores an isBlank boolean. Every edit must update both values correctly. Instead, keep the text and calculate text.trim().length === 0 while rendering. The blank condition follows automatically from the value it describes.",
+        "The same principle applies to a selected plant. If you have a list and a selected ID, you can find the selected record from those values. Keeping a second, independently edited copy of the whole plant invites disagreement. One copy might have a new nickname while the other still has the old one.",
+        "Plantopedia’s profile screen keeps local note text, disclosure state, and a selected photo ID. These represent reader interaction. The loaded plant detail belongs to its query. Copying every server record into useState would force the screen to invent its own rules for refreshing, errors, and account changes. We will let the query own that work in the next lesson."
+      ]
+    },
+    {
+      "title": "Create a new array for a new result",
+      "paragraphs": [
+        "Treat an array already held in state as the previous description of the data. To rename one item, use map to return a new array and a new object for the changed item. To remove an item, use filter. Reading an existing object is fine; changing its nickname directly would also change the old object that other parts of the code may still reference.",
+        "A shallow array copy alone does not copy every object inside it. Writing const next = [...plants] and then changing next[0].nickname still changes the original first object. The teaching reducer below uses an object spread only for the matched record. The other records can keep their existing references because their data has not changed.",
+        "An immutable update makes the transition easier to explain and test. You can compare the previous array with the next array and still inspect what the previous record contained. This is especially valuable when two specimens share a name: match the stable ID, so only the intended one changes."
+      ],
+      "code": {
+        "language": "ts",
+        "filename": "Teaching logic: plant-summary-reducer.ts",
+        "text": "export type Summary = { id: string; nickname: string };\nexport type Action =\n  | { type: \"rename\"; id: string; nickname: string }\n  | { type: \"remove\"; id: string };\n\nexport function summariesReducer(\n  state: Summary[], action: Action,\n): Summary[] {\n  switch (action.type) {\n    case \"rename\":\n      return state.map(plant => plant.id === action.id\n        ? { ...plant, nickname: action.nickname }\n        : plant);\n    case \"remove\":\n      return state.filter(plant => plant.id !== action.id);\n  }\n}"
+      }
+    },
+    {
+      "title": "A reducer names the transition; context shares access",
+      "paragraphs": [
+        "A reducer is a function that receives the previous state and an action, then returns the next state. The action describes an event such as rename or remove. It is useful when several related handlers need the same transition rules. A reducer should not send a network request, read a token, or write a file while calculating that next state.",
+        "Context solves a different problem. A provider makes a value available to descendants without passing it through every intermediate component. It does not automatically decide transition rules, persist data, or authorize access. You can combine a reducer with context, but neither requires the other.",
+        "This repository’s PreferencesProvider shares theme, language, translated words, and the setter for preference changes. SessionProvider shares the current owner’s API client and related services. These are separate contexts because their responsibilities differ. A menu that opens only inside one card usually belongs in that card’s local state, not in a provider used by every screen."
+      ],
+      "code": {
+        "language": "tsx",
+        "filename": "Teaching component using the reducer: SummaryEditor.tsx",
+        "text": "import { useReducer } from \"react\";\nimport { Button, Text, View } from \"react-native\";\nimport { summariesReducer } from \"./plant-summary-reducer\";\n\nexport default function SummaryEditor() {\n  const [plants, dispatch] = useReducer(summariesReducer, [\n    { id: \"east\", nickname: \"Lemon\" },\n    { id: \"west\", nickname: \"Lemon\" },\n  ]);\n  return (\n    <View style={{ padding: 24, gap: 16 }}>\n      {plants.map(plant => <Text key={plant.id}>\n        {plant.id}: {plant.nickname}\n      </Text>)}\n      <Button title=\"Rename the east tree\" onPress={() => dispatch({\n        type: \"rename\", id: \"east\", nickname: \"Balcony lemon\",\n      })} />\n    </View>\n  );\n}"
+      }
+    },
+    {
+      "title": "Place state where the sharing actually happens",
+      "paragraphs": [
+        "If two sibling components both need the same selected photo, move that selected ID to their nearest shared parent and pass the value and callbacks down. This is often called lifting state. The parent becomes the owner, so selecting a thumbnail and displaying its detail cannot silently update unrelated copies.",
+        "Keep hooks at the top level of a component or another hook. Do not call useState only when a menu is open or inside a loop over plants. Each card can be its own component with its own top-level hook. This gives each rendered card a stable place for its interaction memory.",
+        "Finally, distinguish memory from persistence. useState and a reducer do not keep an unsaved note after the process ends. Context also disappears with the running app. Plantopedia uses storage for records that must survive a restart. Choosing context because a value is important does not make that value durable; storage is an additional responsibility taught in lesson 08."
+      ],
+      "callout": {
+        "title": "Ask who owns this fact",
+        "text": "Use local state for one screen’s interaction, lift it when siblings share it, use context for widely needed dependencies, and use a reducer when related transitions need explicit rules. None of these choices automatically saves data to disk."
+      }
+    }
+  ],
+  "lab": {
+    "kind": "state",
+    "title": "Predict the next render",
+    "instructions": "Reset the counter, predict two replacement updates, and run them. Reset again and run two updater functions. Then rename one specimen and explain why its neighbor and the previous array should stay unchanged."
+  },
+  "quiz": [
+    {
+      "question": "count is 0. One handler calls setCount(count + 1) twice. What does the next render show?",
+      "options": [
+        "2",
+        "1",
+        "An error because setters can run only once."
+      ],
+      "answer": 1,
+      "explanation": "Both expressions read count from the same render, so both request 1. Updater functions would each receive the latest queued result and could produce 2."
+    },
+    {
+      "question": "You copied an array with [...plants]. Is it safe to change next[0].nickname directly?",
+      "options": [
+        "Yes, because spread recursively copied every item.",
+        "Yes, if both plants have the same name.",
+        "No, because the item object is still shared with the previous array."
+      ],
+      "answer": 2,
+      "explanation": "The array is new, but its existing item references are reused. Return a new object for the changed item, usually through map, to preserve the previous state."
+    },
+    {
+      "question": "Which value most naturally belongs in a card’s local state?",
+      "options": [
+        "Whether that one card’s options menu is open.",
+        "A server administrator key.",
+        "A second independent copy of every query result."
+      ],
+      "answer": 0,
+      "explanation": "A local menu is an interaction owned by the card. Private credentials belong on the server, and duplicating query data introduces another source that must be kept synchronized."
+    }
+  ],
+  "exercise": {
+    "title": "Rename one lemon tree and preserve the other",
+    "brief": "Implement and explain an immutable rename transition, then connect it to a small reducer-driven screen.",
+    "steps": [
+      "Start with two summaries whose nickname is Lemon and whose IDs differ.",
+      "Predict the two counter results before operating the browser lab or Expo component.",
+      "Implement rename with map and match by id. Create a new object only for the matched record.",
+      "Assert in a small logic check that the previous array still contains the original nickname and that the west specimen is unchanged.",
+      "Connect the reducer to SummaryEditor and explain why dispatch describes an action rather than directly editing a Text node.",
+      "Write where you would put a shared selected-photo ID and what additional work would make an unsaved note survive a restart."
+    ],
+    "acceptance": [
+      "Only the selected ID receives the new name.",
+      "The previous record object is unchanged.",
+      "The rendered list uses stable IDs as keys.",
+      "Your explanation separates local memory, shared access, transition logic, and durable storage."
+    ],
+    "hint": "The rename branch should return state.map(...). Its matching branch returns {...plant, nickname: action.nickname}.",
+    "solution": "Use the summariesReducer shown above. For a rename of east, next !== previous, next[0] !== previous[0], previous[0].nickname remains Lemon, and next[1] === previous[1] because the west record did not change. Dispatching causes useReducer to calculate a new state and React to render that result. A shared parent can own selectedPhotoId; surviving process termination requires a storage write and restore path."
+  },
+  "reflection": "A note editor, a photo strip, and a save button need to agree on the selected specimen. Describe a state owner for that identity, and explain why putting it in context alone would not make it survive a restart.",
+  "takeaways": [
+    "State setters schedule a future render; the current handler keeps its snapshot.",
+    "A new array must also contain a new object for an item whose data changes.",
+    "Context shares access, reducers define transitions, and storage provides durability."
+  ],
+  "repo": [
+    {
+      "path": "src/components/PlantCard.tsx",
+      "why": "Keeps focus and options-menu interaction in local state."
+    },
+    {
+      "path": "src/app/plants/[plantId].tsx",
+      "why": "Separates local note and photo selection from queried plant details."
+    },
+    {
+      "path": "src/theme/preferences.tsx",
+      "why": "Shares theme and language through a provider and restores stored preferences."
+    },
+    {
+      "path": "src/services/session.tsx",
+      "why": "Shares owner-scoped API and voice services through a session context."
+    }
+  ],
+  "sources": [
+    {
+      "title": "State as a snapshot",
+      "url": "https://react.dev/learn/state-as-a-snapshot"
+    },
+    {
+      "title": "Queueing state updates",
+      "url": "https://react.dev/learn/queueing-a-series-of-state-updates"
+    },
+    {
+      "title": "Updating arrays in state",
+      "url": "https://react.dev/learn/updating-arrays-in-state"
+    },
+    {
+      "title": "Reducer and context",
+      "url": "https://react.dev/learn/scaling-up-with-reducer-and-context"
+    }
+  ]
+}

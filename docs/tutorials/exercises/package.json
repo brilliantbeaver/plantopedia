@@ -1,0 +1,9 @@
+{
+  "name": "plantopedia-tutorial-exercises",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test logic/checks.test.mjs",
+    "test:starter": "LAB_MODE=starter node --test logic/checks.test.mjs"
+  }
+}

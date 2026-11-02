@@ -1,0 +1,14 @@
+{
+  "all_passed": true,
+  "checks": [
+    "index.html: unique IDs and all local link/image/script targets exist",
+    "course-reader.html: unique IDs and all local link/image/script targets exist",
+    "13 SVGs parse and have scalable viewBoxes",
+    "10 full notebooks and 30 quiz questions; no stored error outputs",
+    "All 13 ZIPs pass CRC, safe-path, environment-file exclusion, byte-size, and SHA-256 checks",
+    "Notebook bundle matches delivered executed notebooks and has bundle-specific instructions",
+    "Exercise bundle matches every current workspace file and has bundle-specific instructions",
+    "Complete kit matches current course code and review; excludes self-recursion and stale manifest",
+    "All 10 per-lesson ZIPs include current notebook, exercise instructions, and logic workbook"
+  ]
+}

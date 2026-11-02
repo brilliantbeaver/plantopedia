@@ -1,0 +1,9 @@
+{
+  "extends": "../../../tsconfig.json",
+  "compilerOptions": {
+    "types": ["react", "react-native"],
+    "skipLibCheck": true
+  },
+  "include": ["**/solution.tsx", "**/solution/**/*.ts", "**/solution/**/*.tsx"],
+  "exclude": ["**/starter/**", "**/starter.tsx", "../../../node_modules"]
+}

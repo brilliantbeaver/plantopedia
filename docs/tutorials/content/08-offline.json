@@ -1,0 +1,168 @@
+{
+  "id": "08",
+  "slug": "offline",
+  "title": "Save progress when the network disappears",
+  "subtitle": "Trace durable drafts, confirmed checkpoints, and stable operation identifiers through a retryable save.",
+  "minutes": 60,
+  "stage": "Canopy",
+  "prerequisites": [
+    "You can distinguish a captured original, a prepared derivative, and an uploaded photo.",
+    "You understand owner-scoped requests and runtime validation."
+  ],
+  "outcomes": [
+    "You can identify the last locally confirmed checkpoint in an interrupted save.",
+    "You can explain how retrying the same operation differs from creating a new operation.",
+    "You can test a lost acknowledgement without mistaking it for a failed server write."
+  ],
+  "intro": [
+    "Imagine saving a tree beside a trail. The server creates the plant, but your connection disappears before its reply reaches the phone. From the phone's point of view, the outcome is uncertain. Retrying with a new identifier could create a second record. Declaring the save complete could hide missing work. A useful offline design must preserve what it knows and acknowledge what it does not know.",
+    "Plantopedia uses a local draft as a record of the intended work and its confirmed progress. On native devices, SQLite holds the draft and app document storage holds retained files. The outbox then performs the cloud steps in order. This lesson uses that actual path; the browser's local.web.ts draft Map is a preview implementation and does not establish survival across a browser reload."
+  ],
+  "sections": [
+    {
+      "title": "Give each kind of memory a clear job",
+      "paragraphs": [
+        "Component state answers what the current screen should show. Query's cache answers what the client last learned from the server. A durable draft answers what this owner intended to save and how far that work was confirmed. These records have different lifetimes. If you keep the only copy of an unsent observation in useState, leaving the route or restarting the app may lose it.",
+        "The native draft table uses owner and id together as its primary key. Every read and write should preserve that scope. The teaching helpers below use the existing lazy database() opener and Draft schema. The placeholders pass values separately from the SQL text, and reading parses the stored JSON back through the schema. Production local.ts already provides these operations; this excerpt exists to explain their responsibilities, not to create another competing table.",
+        "There is a further platform distinction. The separate feature-storage.web.ts uses browser localStorage for feature documents, while local.web.ts keeps the capture draft/cache preview in memory. Saying that every web feature is in memory would be inaccurate. Saying that capture drafts therefore have the same durable recovery as native SQLite would also be inaccurate. Always trace the specific abstraction a feature uses."
+      ],
+      "code": {
+        "language": "ts",
+        "filename": "Existing-database teaching excerpt: draftStorage.ts",
+        "text": "import { database } from '../services/local';\nimport { Draft } from '../services/local-schema';\n\nexport async function persistDraft(input: unknown) {\n  const draft = Draft.parse(input);\n  const db = await database();\n  await db.runAsync(\n    'INSERT OR REPLACE INTO drafts(owner,id,value) VALUES (?,?,?)',\n    draft.owner, draft.id, JSON.stringify(draft),\n  );\n}\n\nexport async function readDrafts(owner: string) {\n  const db = await database();\n  const rows = await db.getAllAsync<{ value: string }>(\n    'SELECT value FROM drafts WHERE owner = ?', owner,\n  );\n  return rows.map(row => Draft.parse(JSON.parse(row.value)));\n}"
+      }
+    },
+    {
+      "title": "A checkpoint means the client confirmed a completed step",
+      "paragraphs": [
+        "The current cloud outbox follows draft → plant → observation → photo → complete. At draft, the app still needs to create the plant. At plant, the plant request has completed and that checkpoint has been saved locally. At observation, it is ready to upload the prepared photo. At photo, the upload has been confirmed. Complete means this save workflow is finished; it does not mean the plant has a verified species.",
+        "The schema still accepts an identified stage for compatibility, but the present save path does not need to enter that stage. Identification happens through a separate deliberate operation. This separation lets a person preserve their photograph even when a provider is unavailable or returns uncertain evidence.",
+        "The outbox advances a checkpoint after the corresponding awaited operation succeeds. If the following local save fails, the server may be ahead of the local checkpoint. That is one reason retries need stable identities. A checkpoint is the client's confirmed knowledge, not an infallible statement about everything the server may have done. The running Set prevents duplicate in-flight work in this JavaScript process, but it is not a durable cross-device lock."
+      ],
+      "diagram": "outbox",
+      "callout": {
+        "title": "Confirmed locally and completed remotely can differ",
+        "text": "When an acknowledgement is lost, the server may have committed a step while the phone still has the earlier checkpoint. Recovery must work with that uncertainty."
+      }
+    },
+    {
+      "title": "Retry the same intended operation",
+      "paragraphs": [
+        "An idempotency key identifies one intended operation so the server can recognize a retry. Plantopedia derives stable keys such as plant_<draft-id>, observation_<draft-id>, and photo_<draft-id>. The server also compares the operation type and payload. Reusing a key with a different payload is a conflict, because the same operation cannot quietly change its meaning halfway through.",
+        "The following self-contained JavaScript-style TypeScript model deliberately uses an in-memory server result to isolate one idea. Call clientAttempt(true), observe the simulated lost acknowledgement, and then call clientAttempt(false). The saved size remains one because the second call has the same operation key and payload. A real server additionally needs authentication, durable transactions, conflict checks, deletion rules, and concurrency handling. This model supplies none of those production guarantees.",
+        "The actual draft records submittedAt before the first cloud write. The capture form stops ordinary edits after that submission snapshot, which preserves the payload associated with a possibly completed operation. Only a specific typed pre-write input rejection makes that draft editable again. A generic network failure is not proof that the server did nothing."
+      ],
+      "code": {
+        "language": "ts",
+        "filename": "Teaching model: lostAcknowledgement.ts",
+        "text": "const saved = new Map<string, { nickname: string }>();\nconst operationKey = 'plant_draft_42';\nconst frozenPayload = { nickname: 'Trail maple' };\n\nasync function serverSave(key: string, payload: { nickname: string }) {\n  const previous = saved.get(key);\n  if (previous) {\n    if (previous.nickname !== payload.nickname) throw new Error('Conflict');\n    return previous;\n  }\n  const result = { ...payload };\n  saved.set(key, result);\n  return result;\n}\n\nexport async function clientAttempt(loseAcknowledgement: boolean) {\n  const result = await serverSave(operationKey, frozenPayload);\n  if (loseAcknowledgement) throw new Error('Reply was lost after commit');\n  return { result, serverRecordCount: saved.size };\n}\n// await clientAttempt(true) rejects after the server has saved.\n// await clientAttempt(false) returns the same result and count 1."
+      }
+    },
+    {
+      "title": "Recover without overwriting evidence or changing owners",
+      "paragraphs": [
+        "Photo recovery has a special case. The upload may have succeeded before its acknowledgement was lost, and a cached derivative may have disappeared later. Before recreating an expired derivative at the observation checkpoint, resumeDraftPhoto asks for plant detail and looks for the matching photo, observation, and capture time. If it finds them, it can resume at photo. If bytes must be prepared again, stable identifiers and server conflict rules still prevent silently overwriting an uncertain earlier upload.",
+        "Deletion is another boundary. A server tombstone records that a specimen was deleted, so an old draft cannot simply resurrect it by retrying. A record_deleted failure should remain visible rather than turning into a new plant with a new identifier behind the person's back. Likewise, a draft for one owner must never become work for the next account. The outbox checks the supplied sameUser predicate between stages, and the session disposes old API work when its owner changes.",
+        "A good retry button names the unfinished work and preserves the last known draft. Do not retry every error endlessly. Permission failures, validation failures, deletion, and uncertain provider outcomes need different responses from a brief lost connection. In the lab, advance until a failure, restore the connection, and compare the operation keys before and after retry. Your explanation should focus on what the app knows at each point."
+      ]
+    }
+  ],
+  "lab": {
+    "kind": "outbox",
+    "title": "Lose a reply, then resume",
+    "instructions": "Predict the local checkpoint and remote result when a reply disappears after a write. Advance the pipeline, introduce a failure, and retry with the same operation identity. Explain why the UI must preserve the draft instead of assuming the server rolled back."
+  },
+  "quiz": [
+    {
+      "question": "The server saved a plant, but its reply never reached the phone. What is the safest retry?",
+      "options": [
+        "Generate a new draft ID because every tap must be a new operation.",
+        "Reuse the frozen payload and the original operation identity.",
+        "Mark all remaining steps complete."
+      ],
+      "answer": 1,
+      "explanation": "The server can recognize the original operation and return its recorded result. A new identity may create duplicate work. The lost reply proves neither that the write failed nor that the later observation and photo steps completed."
+    },
+    {
+      "question": "Does TanStack Query's in-memory cache replace a durable native draft?",
+      "options": [
+        "No. A draft must preserve intended work and checkpoints across process restarts.",
+        "Yes. A query key guarantees persistence.",
+        "Yes, if the cache contains a URI string."
+      ],
+      "answer": 0,
+      "explanation": "Query cache and durable intent have different responsibilities. A key separates cached data but does not by itself write a draft or retain a physical file. A URI is useful only while the referenced resource remains available."
+    },
+    {
+      "question": "The current outbox reaches complete. What can the interface claim?",
+      "options": [
+        "The species is verified.",
+        "Every platform has identical offline recovery.",
+        "The plant, observation, and photo save workflow has completed."
+      ],
+      "answer": 2,
+      "explanation": "Identification is an independent action in the current implementation. Native SQLite/file recovery and the browser draft preview are different. A completed save should be described precisely without claiming unrelated work succeeded."
+    }
+  ],
+  "exercise": {
+    "title": "Write a failure diary for one draft",
+    "brief": "Use a synthetic specimen and record both local knowledge and remote state through interrupted saves. The goal is a recoverable sequence, not a claim that every request executes exactly once.",
+    "steps": [
+      "Create a table with columns for event, local checkpoint, remote records, operation key, and next action.",
+      "Trace a normal save through draft, plant, observation, photo, and complete.",
+      "Repeat the trace with a lost acknowledgement immediately after plant creation, then retry with the same key and payload.",
+      "Repeat with a successful photo upload whose reply is lost and whose cached derivative later expires.",
+      "Add an account change and a server deletion; explain why neither permits silently replaying the draft as new work."
+    ],
+    "acceptance": [
+      "The trace distinguishes a remote commit from a received acknowledgement.",
+      "Retry preserves IDs and the submitted payload.",
+      "A failed step leaves evidence and the last confirmed checkpoint available.",
+      "Your web/native comparison names the actual storage abstraction instead of making one claim about all browser data."
+    ],
+    "hint": "Ask two questions after every awaited operation: what might have happened remotely, and what has been recorded locally? They may have different answers.",
+    "solution": "After a lost plant acknowledgement, the local checkpoint can remain draft while the server already has the plant. Retry uses plant_<same-id> with the original payload, so the server returns the prior result and the client can record plant. Observation follows the same principle. If an uploaded photo is found during resume, move to photo without uploading another image. An owner change stops old work; a record_deleted result preserves the failure instead of resurrecting the record. No table row should claim that a missing reply proves a rollback."
+  },
+  "reflection": "Why can an operation guard in a JavaScript Set reduce duplicate taps while still being insufficient after an app restart? Explain which responsibilities belong to local persistence and which belong to the server.",
+  "takeaways": [
+    "A durable draft records intended work and locally confirmed checkpoints.",
+    "Stable operation identity and frozen payloads make uncertain retries safer.",
+    "Lost acknowledgements, owner changes, and deletion are first-class recovery cases."
+  ],
+  "repo": [
+    {
+      "path": "src/services/outbox.ts",
+      "why": "The save path advances checkpoints, preserves failures, uses stable operation keys, and checks the owner predicate."
+    },
+    {
+      "path": "src/services/local.ts",
+      "why": "Native SQLite and retained document files provide draft persistence."
+    },
+    {
+      "path": "src/services/local.web.ts",
+      "why": "The capture draft/cache browser preview uses Maps and has a different lifetime."
+    },
+    {
+      "path": "src/features/capture/resume.ts",
+      "why": "Recovery can find an acknowledged-by-server photo before recreating an expired derivative."
+    },
+    {
+      "path": "server/src/application/core.ts",
+      "why": "Durable server operations compare type/payload hashes, recognize retries, and honor deleted records."
+    },
+    {
+      "path": "tests/components/outbox.test.tsx",
+      "why": "Existing tests cover retained failure details, metadata rejection, and stopping work after an account change."
+    }
+  ],
+  "sources": [
+    {
+      "title": "Expo SDK 57: SQLite persistence",
+      "url": "https://docs.expo.dev/versions/v57.0.0/sdk/sqlite/"
+    },
+    {
+      "title": "TanStack Query v5: query keys",
+      "url": "https://tanstack.com/query/latest/docs/framework/react/guides/query-keys"
+    }
+  ]
+}

@@ -1,0 +1,164 @@
+{
+  "id": "07",
+  "slug": "camera",
+  "title": "Turn a photograph into a recoverable observation",
+  "subtitle": "Build a capture flow that respects permission, preserves the original, and prepares a separate upload image.",
+  "minutes": 55,
+  "stage": "Branch",
+  "prerequisites": [
+    "You can use state, refs, async functions, and an authenticated API boundary.",
+    "You have completed lessons 01–06."
+  ],
+  "outcomes": [
+    "You can explain why permission and camera readiness are separate states.",
+    "You can distinguish a temporary capture URI, a retained original, and a prepared derivative.",
+    "You can give a person a useful next action after cancellation, denial, or image-processing failure."
+  ],
+  "intro": [
+    "A camera screen has more states than an open lens and a shutter button. The operating system can deny permission. The camera can be mounted but not ready. A person can leave the screen while image preparation is still working. A photograph can exist in a temporary location that will not survive a later cleanup. Each state changes what the interface should promise.",
+    "Plantopedia treats the photograph as evidence for an observation of one specimen. The app first retains an original and records a draft. It then creates a separate prepared image for upload. This order gives a failed preparation step somewhere to return to. You will trace that order and build a smaller capture component before attempting the whole workflow."
+  ],
+  "sections": [
+    {
+      "title": "Ask when the action needs the camera",
+      "paragraphs": [
+        "The permission result initially may still be loading. Once it arrives, the app can distinguish granted access from a denial. If the system allows another request, explain why the camera helps and offer a clear button. If it no longer allows another request, repeating the same request is frustrating. Offer settings or another input path instead. A cancelled gallery picker is an ordinary decision to return, not an upload error.",
+        "The teaching component below covers permission and a first capture. It deliberately receives an onCaptured callback instead of inventing a storage service. The caller owns the next step. The example also waits for onCameraReady, uses a ref to reject a second simultaneous capture, and renders a visible error if the capture fails. These are separate responsibilities: state changes the display, while a ref can guard an operation immediately between renders.",
+        "Use this component inside an Expo screen in your course copy. It is not a replacement for Plantopedia's fuller CaptureScreen, which handles focus changes, drafts, gallery selection, preparation, saving, and navigation. On the web, camera behavior also depends on browser support and a secure origin. The HTML lab models decisions; it does not open your physical camera."
+      ],
+      "code": {
+        "language": "tsx",
+        "filename": "Teaching example: CameraLesson.tsx",
+        "text": "import { useRef, useState } from 'react';\nimport { Button, Linking, Text, View } from 'react-native';\nimport { CameraView, useCameraPermissions } from 'expo-camera';\n\nexport function CameraLesson({ onCaptured }: {\n  onCaptured: (uri: string) => Promise<void>;\n}) {\n  const [permission, requestPermission] = useCameraPermissions();\n  const camera = useRef<CameraView>(null);\n  const inFlight = useRef(false);\n  const [ready, setReady] = useState(false);\n  const [busy, setBusy] = useState(false);\n  const [error, setError] = useState('');\n  async function capture() {\n    if (!ready || inFlight.current || !camera.current) return;\n    inFlight.current = true;\n    setBusy(true);\n    setError('');\n    try {\n      const image = await camera.current.takePictureAsync({ exif: false });\n      if (!image) throw new Error('No photo was returned.');\n      await onCaptured(image.uri);\n    } catch {\n      setError('The photo could not be captured. Please try again.');\n    } finally {\n      inFlight.current = false;\n      setBusy(false);\n    }\n  }\n  if (!permission) return <Text>Checking camera permission…</Text>;\n  if (!permission.granted) {\n    return <View style={{ gap: 12 }}>\n      <Text>Use the camera to photograph a plant observation.</Text>\n      <Button\n        title={permission.canAskAgain ? 'Allow camera' : 'Open settings'}\n        onPress={() => {\n          void (permission.canAskAgain ? requestPermission() : Linking.openSettings());\n        }} />\n    </View>;\n  }\n  return <View style={{ gap: 12 }}>\n    <CameraView ref={camera} style={{ height: 320 }}\n      onCameraReady={() => setReady(true)} />\n    <Button title={busy ? 'Preparing…' : 'Take photo'}\n      disabled={!ready || busy} onPress={() => void capture()} />\n    {error ? <Text accessibilityLiveRegion=\"polite\">{error}</Text> : null}\n  </View>;\n}"
+      }
+    },
+    {
+      "title": "Preserve the original before doing work that can fail",
+      "paragraphs": [
+        "A URI names a resource; it does not mean that resource is permanent or uploaded. The URI returned by capture may point into temporary app storage. Plantopedia's native local.retain copies the original into an owner-specific directory under the app's document storage and awaits the copy before returning. It then saves the draft before preparing the image. If preparation fails, the retained original and draft are still available for a retry.",
+        "The following provider-dependent excerpt illustrates the first part of that sequence using the actual Draft fields. Each observation and photo gets its own stable identifier. The capturedAt value records when the observation was captured rather than when the network eventually accepts it. The example returns a draft with derivative set to null because preparation is a later step. It is not yet ready for upload. The current shared draft schema also requires mode; this plant example sets it to plant.",
+        "Durable evidence and immediate visual feedback serve different purposes. Showing a preview tells the person which photograph they chose. Saving the draft tells the app how to recover it after a process restart. An image on screen proves neither successful storage nor a completed API operation."
+      ],
+      "diagram": "camera",
+      "code": {
+        "language": "ts",
+        "filename": "Existing-helper teaching excerpt: retainObservation.ts",
+        "text": "import { randomUUID } from 'expo-crypto';\nimport { local, type Draft } from '../services/local';\n\nexport async function retainObservation(\n  owner: string, uri: string, width: number, height: number,\n): Promise<Draft> {\n  const id = randomUUID();\n  const original = await local.retain(owner, id, uri);\n  const draft: Draft = {\n    mode: 'plant', id, owner, observationId: randomUUID(), photoId: randomUUID(),\n    capturedAt: new Date().toISOString(),\n    original, width, height, derivative: null,\n    nickname: '', place: '', text: '', ownership: 'observed',\n    stage: 'draft', failure: null,\n  };\n  await local.save(draft);\n  return draft;\n}"
+      }
+    },
+    {
+      "title": "Create a derivative for transport",
+      "paragraphs": [
+        "A full-resolution photograph can be much larger than a phone needs to upload for this workflow. Plantopedia's prepareImage decodes the source, applies its orientation through the rendering process, checks the upright dimensions, and limits the longer edge to 1600 pixels. It encodes a JPEG with the configured compression value and returns a separate image URI. The original remains available as the preserved source.",
+        "Image dimensions are not file size. Two 1600-pixel JPEGs can have different byte counts because their detail and compression differ. Read the resize rule in prepareImage, then use the lab to explore preparation failure and recovery. Real upload acceptance depends on actual encoded bytes and server checks. Do not promise a fixed byte limit solely from width and height.",
+        "Requesting exif: false during capture is helpful, but it does not guarantee that every later image is free of metadata. The gallery may supply another format, and an encoder may add its own JPEG segments. The repository explicitly strips metadata from the derivative and checks it before upload. Preserve that helper rather than replacing it with a comment that says metadata is gone. Resource release in finally also matters because decoded images can consume considerable device memory."
+      ],
+      "callout": {
+        "title": "Prepared does not mean uploaded",
+        "text": "A derivative is a local file created for transport. The upload is a separate authenticated request with its own possible failure. The server must still check the received image."
+      }
+    },
+    {
+      "title": "Design recovery around the last confirmed step",
+      "paragraphs": [
+        "After a person selects a photograph, the screen can show a preview while preparation works. If preparation fails, say that step failed and offer retry or another photograph. Do not erase the original evidence merely to return to an empty screen. Plantopedia also closes the camera when the route loses focus, which avoids keeping an unnecessary camera preview active behind another route.",
+        "A save is different from identification. The current outbox saves the plant, observation, and photo, then completes. Identification is a separate deliberate action. This matters when a provider is unavailable or uncertain: a person should still be able to preserve the specimen and its photograph. A species suggestion is evidence to review, not an automatic reason to merge two specimens.",
+        "Try the failure sequence before polishing the shutter animation. Deny permission, grant it later, cancel the picker, press capture twice quickly, force preparation to fail in a controlled test, and navigate away. For each event, describe what remains stored and which action is available next. A clear recovery story is part of the camera feature itself."
+      ]
+    }
+  ],
+  "lab": {
+    "kind": "camera",
+    "title": "Walk the capture pipeline",
+    "instructions": "Predict the next allowed action before changing permission or advancing the capture steps. Introduce a preparation failure and identify which saved resource makes a retry possible. Explain why a preview alone is insufficient evidence of a save."
+  },
+  "quiz": [
+    {
+      "question": "Camera permission is granted. Is the shutter immediately safe to use?",
+      "options": [
+        "Yes, permission guarantees the camera is ready.",
+        "No, the camera view must also report readiness and avoid a simultaneous capture.",
+        "Only if a plant already exists on the server."
+      ],
+      "answer": 1,
+      "explanation": "Permission allows access but does not establish that the mounted camera has finished initializing. A readiness event and an operation guard cover different conditions. The server record is unrelated to whether the local camera can capture."
+    },
+    {
+      "question": "Preparation fails after the native draft and retained original were saved. What is a useful recovery?",
+      "options": [
+        "Delete the original and ask the person to start over.",
+        "Mark the network request complete.",
+        "Keep the evidence and retry preparation from the retained original."
+      ],
+      "answer": 2,
+      "explanation": "The retained original is the source for another preparation attempt. Deleting it removes the recovery path. Preparation failure does not establish that any upload happened, so claiming network completion would be misleading."
+    },
+    {
+      "question": "Why does the repository inspect and strip metadata after re-encoding?",
+      "options": [
+        "An encoder can add metadata, so re-encoding alone does not establish the promised boundary.",
+        "A smaller width always removes metadata.",
+        "A JPEG can never contain metadata."
+      ],
+      "answer": 0,
+      "explanation": "Metadata can appear in encoded JPEG segments independently of pixel dimensions. Explicit stripping and checking support the intended upload rule. The original remains a separate retained resource."
+    }
+  ],
+  "exercise": {
+    "title": "Build a permission and recovery storyboard",
+    "brief": "In your course copy, connect a small camera component to a retain-first draft flow. Keep the actual upload as a later lesson step and document which behavior needs a real device.",
+    "steps": [
+      "Draw loading-permission, denied, granted-but-not-ready, ready, capturing, preparing, preview, and error states with the action available in each.",
+      "Run the teaching CameraLesson in an Expo route and supply an onCaptured callback that visibly confirms receipt of the URI.",
+      "Use the existing local.retain and local.save helpers to preserve a draft before calling prepareImage.",
+      "In a controlled teaching test, reject preparation and verify that the draft still points to the retained original.",
+      "Compare native local.ts with local.web.ts and state why the latter does not prove durable native recovery."
+    ],
+    "acceptance": [
+      "The shutter cannot begin another capture while the first is in flight.",
+      "The denial screen gives a useful next action, and cancelling a picker does not become a capture error.",
+      "Preparation uses a different image resource and never overwrites the retained original.",
+      "Your evidence notes separate browser simulation, component tests, and physical-device checks."
+    ],
+    "hint": "Write down the draft before the first operation that might fail. Use finally to release guards, and keep a clear error-step label so a retry targets the correct operation.",
+    "solution": "The robust order is permission → camera ready → capture → await retained original → await saved draft → prepare derivative → save updated draft → preview/save action. A preparation failure leaves the earlier draft recoverable. The production CaptureScreen and resumeDraftPhoto already implement a broader version of this pattern. A gallery cancel simply returns without creating a new draft. Browser labs can verify state decisions, but actual camera permission, orientation, storage survival, and memory behavior require platform acceptance."
+  },
+  "reflection": "If the app closes immediately after capture, what evidence would you need before promising that the photograph can be resumed? Explain the difference between a URI in component state and a retained file recorded in durable storage.",
+  "takeaways": [
+    "Permission, camera readiness, and an in-flight operation are different conditions.",
+    "Retaining the original and saving the draft before preparation creates a recovery path.",
+    "A prepared derivative, an uploaded photo, and an identification result represent different completed work."
+  ],
+  "repo": [
+    {
+      "path": "src/features/capture/CaptureScreen.tsx",
+      "why": "The real screen handles permission, capture, gallery input, draft persistence, preparation, save recovery, and focus changes."
+    },
+    {
+      "path": "src/features/capture/prepare.ts",
+      "why": "The image pipeline checks dimensions, creates a JPEG derivative, strips metadata, and releases image resources."
+    },
+    {
+      "path": "src/features/capture/metadata.ts",
+      "why": "Metadata handling is an explicit byte-level boundary rather than a promise based only on camera options."
+    },
+    {
+      "path": "src/services/local.ts",
+      "why": "Native storage retains original files and saves owner-scoped drafts."
+    }
+  ],
+  "sources": [
+    {
+      "title": "Expo SDK 57: Camera",
+      "url": "https://docs.expo.dev/versions/v57.0.0/sdk/camera/"
+    },
+    {
+      "title": "Expo SDK 57: ImagePicker",
+      "url": "https://docs.expo.dev/versions/v57.0.0/sdk/imagepicker/"
+    },
+    {
+      "title": "Expo SDK 57: ImageManipulator",
+      "url": "https://docs.expo.dev/versions/v57.0.0/sdk/imagemanipulator/"
+    }
+  ]
+}

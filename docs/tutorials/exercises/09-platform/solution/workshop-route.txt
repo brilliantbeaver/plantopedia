@@ -1,0 +1,2 @@
+// Save as src/app/workshop.tsx after copying solution files to src/features/tutorial-platform/.
+export { default } from "../features/tutorial-platform/LocaleLab";

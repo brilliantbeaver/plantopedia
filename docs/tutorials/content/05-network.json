@@ -1,0 +1,187 @@
+{
+  "id": "05",
+  "slug": "network",
+  "title": "Ask for data and tell the truth",
+  "subtitle": "Handle asynchronous requests, validate responses, and use TanStack Query to keep each owner’s records coherent.",
+  "minutes": 60,
+  "stage": "Roots",
+  "prerequisites": [
+    "You can distinguish local interaction state from server-owned records.",
+    "You can read async functions and a try/catch block."
+  ],
+  "outcomes": [
+    "You can explain network rejection, HTTP errors, invalid response data, and an empty success separately.",
+    "You can build an owner-scoped query key and display cached data during a refresh.",
+    "You can explain when a successful write should invalidate a query."
+  ],
+  "intro": [
+    "A garden screen cannot assume that a request finishes immediately or succeeds. The reader may be on a train, the server may reject a session, or a deployment may return a response with an unexpected shape. A useful interface tells the reader which situation actually happened while preserving useful information it already has.",
+    "This lesson follows a request from a React Native screen to Plantopedia’s API and back. You will first inspect the steps hidden behind a simple load function, then let TanStack Query manage the lifecycle of reading server records. The interactive network lab uses deterministic example responses; it sends no live requests and requires no account."
+  ],
+  "sections": [
+    {
+      "title": "An asynchronous request is a sequence of separate checks",
+      "paragraphs": [
+        "fetch starts a request and returns a promise for a response. await lets an async function continue when that promise settles without blocking the screen’s ability to respond. A network failure can reject that promise. An HTTP response such as 401 or 500 normally still produces a Response object, so the code must also inspect response.ok.",
+        "After an acceptable HTTP response, parsing JSON is another step that can fail. Even valid JSON may have the wrong fields. TypeScript checks the code you wrote, but it cannot guarantee that bytes arriving over the network match its types. The PlantPage runtime schema checks the response before the app treats it as a page of plant records.",
+        "The teaching helper below exposes those boundaries explicitly. It assumes the caller already has the correct API base URL and a current token. It uses the existing contract rather than declaring a smaller pretend server response. Do not call this helper with a token placed in a URL, saved in a notebook, or printed into logs."
+      ],
+      "diagram": "network",
+      "code": {
+        "language": "ts",
+        "filename": "Teaching helper: read-plants.ts",
+        "text": "import { PlantPage } from \"@plantopedia/contracts\";\n\nexport async function readPlants(\n  baseUrl: string, token: string, signal?: AbortSignal,\n): Promise<PlantPage> {\n  const response = await fetch(`${baseUrl.replace(/\\/$/, \"\")}/v1/plants`, {\n    headers: { Authorization: `Bearer ${token}` },\n    ...(signal ? { signal } : {}),\n  });\n  if (!response.ok) throw new Error(`HTTP ${response.status}`);\n  const raw: unknown = await response.json();\n  return PlantPage.parse(raw);\n}"
+      }
+    },
+    {
+      "title": "Keep transport and identity in the service layer",
+      "paragraphs": [
+        "The real apiClient in src/services/api.ts performs more work than the teaching helper. It obtains a current token through a callback, uses validated public configuration, checks typed API errors, validates successful responses, and tracks the session’s request lifecycle. Its dispose method aborts requests when that client is released.",
+        "Keeping this logic out of each card prevents every screen from inventing slightly different headers and error behavior. The session provider supplies the client for the current owner. The UI asks api.plants() for records rather than reading a credential or constructing a provider request itself.",
+        "An owner can be a signed-in cloud account or the app’s local guest owner. The screen can use the same high-level service methods while their available behavior differs. Guest mode is a local experience, not proof that a cloud request has been authenticated. The next lesson examines that authorization boundary in detail."
+      ]
+    },
+    {
+      "title": "Give each result a key that describes all of its identity",
+      "paragraphs": [
+        "TanStack Query keeps results under query keys. Plantopedia’s collection key is [owner, \"plants\"], and a detail key is [owner, \"plant\", id]. The owner matters: two accounts can ask for a collection using the same screen component, and those results must not occupy the same cache entry.",
+        "A key identifies cached data; it is not a secret and does not authorize a request. The server still verifies the token and checks access. The actual client request also needs lifecycle protection when an account changes. A carefully named cache key cannot stop an already running request on its own.",
+        "The QueryClientProvider is already installed in the real root layout. Its defaults retry queries once and consider query data fresh for fifteen seconds. Those are cache freshness and retry choices. They do not mean a result is saved to durable storage, that requests are made every fifteen seconds, or that a lost connection has been repaired."
+      ],
+      "code": {
+        "language": "tsx",
+        "filename": "Teaching screen excerpt: runs under the existing app providers",
+        "text": "import { useQuery } from \"@tanstack/react-query\";\nimport { Button, Text, View } from \"react-native\";\nimport { useSessionApi } from \"../../services/session\";\n\nexport default function GardenStatus() {\n  const { api, owner } = useSessionApi();\n  const plants = useQuery({\n    queryKey: [owner, \"plants\"],\n    queryFn: () => api.plants(),\n  });\n  if (!plants.data) {\n    if (plants.isPending) return <Text>Loading your garden…</Text>;\n    return <View><Text>Your garden could not be loaded.</Text>\n      <Button title=\"Try again\" onPress={() => void plants.refetch()} />\n    </View>;\n  }\n  return (\n    <View style={{ padding: 24, gap: 12 }}>\n      <Text>{plants.data.items.length === 0\n        ? \"Your garden is empty. Try saving your first plant.\"\n        : `${plants.data.items.length} plants on this page`}</Text>\n      {plants.data.items.map(plant =>\n        <Text key={plant.id}>{plant.nickname}</Text>)}\n      {plants.isFetching && <Text>Checking for updates…</Text>}\n      {plants.isError && <Text>Showing saved query data; refresh failed.</Text>}\n      <Button title=\"Refresh\" disabled={plants.isFetching}\n        onPress={() => void plants.refetch()} />\n    </View>\n  );\n}"
+      }
+    },
+    {
+      "title": "Design the four results the reader can actually encounter",
+      "paragraphs": [
+        "Before the first result arrives, show a loading state. If the first request fails and there is no data, show an explanation and an appropriate retry action. If a request succeeds with an empty items array, show an empty collection message. These outcomes have different evidence behind them; an error does not prove the collection is empty.",
+        "A later refresh can fail after useful data has already arrived. In that case, keep the known cards visible and explain that checking for updates failed. isFetching can be true during both an initial request and a later refresh. Test data availability separately from refresh activity instead of replacing the whole screen with a spinner every time a request starts.",
+        "The example counts records on the returned page. PlantPage includes nextCursor and limited, so a page length is not necessarily the total collection size. In a real growing list, add an explicit pagination or load-more design rather than labeling the first page as the entire garden. Good explanations are precise about both errors and successes."
+      ],
+      "callout": {
+        "title": "A stale result can still be useful",
+        "text": "Freshness describes whether a cached response may need checking. It does not mean the result is unusable. If a background check fails, show what you know and explain what you could not confirm."
+      }
+    },
+    {
+      "title": "After a write, decide what is now out of date",
+      "paragraphs": [
+        "A mutation changes server data, such as adding an observation. Once that write succeeds, a previously loaded detail may be out of date. invalidateQueries marks matching cached queries stale and can refetch active ones. Use the same owner and record identity that you used when reading the data.",
+        "The real profile screen invalidates [owner, \"plant\", id] after adding a note. Capture invalidates [owner, \"plants\"] after saving a specimen. These choices follow the visible information that changed. A mutation does not automatically know every screen that might display a related summary.",
+        "Do not retry a write blindly just because the acknowledgement was lost. The server might already have performed it. Plantopedia supplies stable operation keys for such actions; the outbox lesson explains why retrying the same operation differs from starting a new one. Start with honest success and failure handling before adding optimistic updates that temporarily display an unconfirmed change."
+      ],
+      "code": {
+        "language": "tsx",
+        "filename": "Teaching hook excerpt: invalidate the affected owner and specimen",
+        "text": "import { useQueryClient } from \"@tanstack/react-query\";\n\nexport function useRefreshPlant(owner: string, plantId: string) {\n  const query = useQueryClient();\n  return () => query.invalidateQueries({\n    queryKey: [owner, \"plant\", plantId],\n  });\n}"
+      }
+    }
+  ],
+  "lab": {
+    "kind": "network",
+    "title": "Try the request that never has one outcome",
+    "instructions": "Predict the screen for a successful page, empty page, HTTP failure, malformed response, and failed refresh with cached records. Run each scenario and explain why the message should differ."
+  },
+  "quiz": [
+    {
+      "question": "fetch receives an HTTP 500 response. Which check is still necessary?",
+      "options": [
+        "response.ok, because HTTP error responses do not normally reject fetch by themselves.",
+        "Only whether the URL contains https.",
+        "Only whether TypeScript accepted the return type."
+      ],
+      "answer": 0,
+      "explanation": "fetch can resolve with an error-status Response. Inspect status or ok before parsing the success contract. HTTPS and static types solve different problems."
+    },
+    {
+      "question": "A refresh fails, but the query still has a previously loaded page. What should the screen usually do?",
+      "options": [
+        "Announce that the garden is empty.",
+        "Keep useful records visible and explain that the refresh failed.",
+        "Delete all cached records immediately."
+      ],
+      "answer": 1,
+      "explanation": "The failure tells you that the latest check did not succeed. It does not prove the existing records disappeared. Distinguish stale available data from an initial failure with no data."
+    },
+    {
+      "question": "Why include owner in [owner, \"plant\", id]?",
+      "options": [
+        "It encrypts the plant ID.",
+        "It replaces token validation on the server.",
+        "It separates account-specific cache entries."
+      ],
+      "answer": 2,
+      "explanation": "The cache key describes which owner’s result is stored. Server authentication and authorization remain necessary. A key also does not automatically cancel an in-flight request."
+    }
+  ],
+  "exercise": {
+    "title": "Build a truthful garden status screen",
+    "brief": "Use a deterministic teaching transport or the provided network lab to cover the outcomes before connecting a learning screen to the real session API.",
+    "steps": [
+      "List the result of network rejection, HTTP 401, HTTP 500, invalid JSON shape, empty success, and populated success.",
+      "Implement the no-data loading, no-data failure, empty success, and populated-data branches.",
+      "Retain the populated branch during a later refresh and show a separate refresh failure message.",
+      "Use [owner, \"plants\"] for the collection and [owner, \"plant\", id] for a detail.",
+      "After a successful note write, invalidate the affected detail key. Explain separately how a stable operation key makes a retry safer.",
+      "Record whether the displayed count describes one page or the entire collection."
+    ],
+    "acceptance": [
+      "An HTTP error is not mistaken for a successful response.",
+      "Malformed data is rejected before rendering as a valid PlantPage.",
+      "An empty success and an initial failure have different messages.",
+      "Cached cards remain visible during a failed refresh.",
+      "Account identity is present in every private-record query key."
+    ],
+    "hint": "Check whether data exists before deciding that an error must replace the entire screen. Query freshness, data presence, and request activity are separate facts.",
+    "solution": "Use the GardenStatus branching structure. The transport checks response.ok, then parses unknown JSON with PlantPage. For private cloud reads, the session API supplies the current token and request lifecycle. A successful mutation can return query.invalidateQueries({queryKey:[owner,\"plant\",id]}). Keep the page visible when data exists, and use isFetching or isError for a separate update message. The existing api.plants wrapper does not consume TanStack’s signal argument, so do not claim that merely unmounting this teaching screen cancels that request; the real client’s lifecycle abort is separate."
+  },
+  "reflection": "The app shows three cached plants while a refresh receives 401. Explain what the UI knows, what it does not know, and why fixing the query key cannot repair an expired or mismatched session.",
+  "takeaways": [
+    "A reliable request checks connectivity, HTTP status, parsing, and response shape.",
+    "Query keys identify cached results, while the server authorizes access.",
+    "Data availability, request activity, and freshness deserve separate UI decisions."
+  ],
+  "repo": [
+    {
+      "path": "src/services/api.ts",
+      "why": "Implements authenticated requests, typed errors, response validation, and session lifecycle cancellation."
+    },
+    {
+      "path": "src/services/session.tsx",
+      "why": "Creates the current owner’s service scope and releases it on lifecycle changes."
+    },
+    {
+      "path": "src/app/(tabs)/index.tsx",
+      "why": "Reads the owner-scoped collection and distinguishes initial, cached, and refresh states."
+    },
+    {
+      "path": "src/app/plants/[plantId].tsx",
+      "why": "Loads owner-scoped detail, caches it locally, and invalidates it after a successful observation write."
+    },
+    {
+      "path": "src/app/_layout.tsx",
+      "why": "Defines the stable QueryClient with this repository’s retry and freshness defaults."
+    }
+  ],
+  "sources": [
+    {
+      "title": "React Native networking",
+      "url": "https://reactnative.dev/docs/network"
+    },
+    {
+      "title": "TanStack Query keys",
+      "url": "https://tanstack.com/query/latest/docs/framework/react/guides/query-keys"
+    },
+    {
+      "title": "TanStack query invalidation",
+      "url": "https://tanstack.com/query/latest/docs/framework/react/guides/query-invalidation"
+    },
+    {
+      "title": "TanStack background fetching indicators",
+      "url": "https://tanstack.com/query/latest/docs/framework/react/guides/background-fetching-indicators"
+    }
+  ]
+}

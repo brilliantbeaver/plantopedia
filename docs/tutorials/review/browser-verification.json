@@ -1,0 +1,317 @@
+{
+  "checkedAt": "2026-11-02T01:25:01.517Z",
+  "baseUrl": "http://127.0.0.1:8765/",
+  "browser": "Dedicated Playwright Chromium headless shell",
+  "checks": [
+    {
+      "name": "Overview contains ten lesson cards and ten navigation links",
+      "passed": true,
+      "milliseconds": 10
+    },
+    {
+      "name": "Lesson search filters and restores navigation",
+      "passed": true,
+      "milliseconds": 15
+    },
+    {
+      "name": "Lesson 01 renders text, three quizzes, lab, graphics, and sources",
+      "passed": true,
+      "milliseconds": 33
+    },
+    {
+      "name": "Lesson 02 renders text, three quizzes, lab, graphics, and sources",
+      "passed": true,
+      "milliseconds": 22
+    },
+    {
+      "name": "Lesson 03 renders text, three quizzes, lab, graphics, and sources",
+      "passed": true,
+      "milliseconds": 12
+    },
+    {
+      "name": "Lesson 04 renders text, three quizzes, lab, graphics, and sources",
+      "passed": true,
+      "milliseconds": 12
+    },
+    {
+      "name": "Lesson 05 renders text, three quizzes, lab, graphics, and sources",
+      "passed": true,
+      "milliseconds": 11
+    },
+    {
+      "name": "Lesson 06 renders text, three quizzes, lab, graphics, and sources",
+      "passed": true,
+      "milliseconds": 11
+    },
+    {
+      "name": "Lesson 07 renders text, three quizzes, lab, graphics, and sources",
+      "passed": true,
+      "milliseconds": 17
+    },
+    {
+      "name": "Lesson 08 renders text, three quizzes, lab, graphics, and sources",
+      "passed": true,
+      "milliseconds": 10
+    },
+    {
+      "name": "Lesson 09 renders text, three quizzes, lab, graphics, and sources",
+      "passed": true,
+      "milliseconds": 17
+    },
+    {
+      "name": "Lesson 10 renders text, three quizzes, lab, graphics, and sources",
+      "passed": true,
+      "milliseconds": 11
+    },
+    {
+      "name": "Quiz blank, wrong, changed, correct, reload, and retry behavior",
+      "passed": true,
+      "milliseconds": 195
+    },
+    {
+      "name": "Notes, sketch, checklist, completion, and solid surfaces persist without HTML injection",
+      "passed": true,
+      "milliseconds": 117
+    },
+    {
+      "name": "Section and knowledge-check jumps retain lesson hash and focus heading",
+      "passed": true,
+      "milliseconds": 27
+    },
+    {
+      "name": "Export contains escaped-text notes and self-reported progress",
+      "passed": true,
+      "milliseconds": 20,
+      "details": {
+        "filename": "plantopedia-learning-notes-2026-11-02.json",
+        "format": "plantopedia-learning-notes"
+      }
+    },
+    {
+      "name": "Runtime lab covers native, web, and custom module choices",
+      "passed": true,
+      "milliseconds": 57
+    },
+    {
+      "name": "Layout lab direction, gap, width, and text-size controls update preview",
+      "passed": true,
+      "milliseconds": 16
+    },
+    {
+      "name": "Navigation lab distinct IDs, history, back, and reset",
+      "passed": true,
+      "milliseconds": 74
+    },
+    {
+      "name": "State lab snapshot/updater counts and immutable rename/favorite transitions",
+      "passed": true,
+      "milliseconds": 108
+    },
+    {
+      "name": "Network lab cached refresh failure, owner isolation, cancellation, and all response cases",
+      "passed": true,
+      "milliseconds": 7067
+    },
+    {
+      "name": "Security lab credential placement and denied identity paths",
+      "passed": true,
+      "milliseconds": 107
+    },
+    {
+      "name": "Camera lab permission/readiness, retained draft, preparation failure and retry",
+      "passed": true,
+      "milliseconds": 209
+    },
+    {
+      "name": "Outbox lab lost acknowledgement deduplicates; account/deletion gates stop writes",
+      "passed": true,
+      "milliseconds": 226
+    },
+    {
+      "name": "Voice lab resource generations, stale callbacks, reply interruption, and adaptive glass",
+      "passed": true,
+      "milliseconds": 215
+    },
+    {
+      "name": "Quality lab evidence choices cover all five scenarios",
+      "passed": true,
+      "milliseconds": 192
+    },
+    {
+      "name": "All downloadable ZIP endpoints return HTTP 200 with nonempty bodies",
+      "passed": true,
+      "milliseconds": 21,
+      "details": {
+        "zipFiles": 13
+      }
+    },
+    {
+      "name": "Mobile overview and all ten pages have no outer overflow; menu closes with Escape",
+      "passed": true,
+      "milliseconds": 354,
+      "details": {
+        "10": {
+          "width": 390,
+          "document": 390,
+          "body": 390,
+          "diagram": {
+            "clientWidth": 349,
+            "scrollWidth": 980,
+            "imageWidth": 980,
+            "scrolled": 631
+          }
+        },
+        "welcome": {
+          "width": 390,
+          "document": 390,
+          "body": 390
+        },
+        "01": {
+          "width": 390,
+          "document": 390,
+          "body": 390,
+          "diagram": {
+            "clientWidth": 349,
+            "scrollWidth": 980,
+            "imageWidth": 980,
+            "scrolled": 631
+          }
+        },
+        "02": {
+          "width": 390,
+          "document": 390,
+          "body": 390,
+          "diagram": {
+            "clientWidth": 349,
+            "scrollWidth": 980,
+            "imageWidth": 980,
+            "scrolled": 631
+          }
+        },
+        "03": {
+          "width": 390,
+          "document": 390,
+          "body": 390,
+          "diagram": {
+            "clientWidth": 349,
+            "scrollWidth": 980,
+            "imageWidth": 980,
+            "scrolled": 631
+          }
+        },
+        "04": {
+          "width": 390,
+          "document": 390,
+          "body": 390,
+          "diagram": {
+            "clientWidth": 349,
+            "scrollWidth": 980,
+            "imageWidth": 980,
+            "scrolled": 631
+          }
+        },
+        "05": {
+          "width": 390,
+          "document": 390,
+          "body": 390,
+          "diagram": {
+            "clientWidth": 349,
+            "scrollWidth": 980,
+            "imageWidth": 980,
+            "scrolled": 631
+          }
+        },
+        "06": {
+          "width": 390,
+          "document": 390,
+          "body": 390,
+          "diagram": {
+            "clientWidth": 349,
+            "scrollWidth": 980,
+            "imageWidth": 980,
+            "scrolled": 631
+          }
+        },
+        "07": {
+          "width": 390,
+          "document": 390,
+          "body": 390,
+          "diagram": {
+            "clientWidth": 349,
+            "scrollWidth": 980,
+            "imageWidth": 980,
+            "scrolled": 631
+          }
+        },
+        "08": {
+          "width": 390,
+          "document": 390,
+          "body": 390,
+          "diagram": {
+            "clientWidth": 349,
+            "scrollWidth": 980,
+            "imageWidth": 980,
+            "scrolled": 631
+          }
+        },
+        "09": {
+          "width": 390,
+          "document": 390,
+          "body": 390,
+          "diagram": {
+            "clientWidth": 349,
+            "scrollWidth": 980,
+            "imageWidth": 980,
+            "scrolled": 631
+          }
+        }
+      }
+    },
+    {
+      "name": "Standalone file URL loads all lesson data and interactive labs",
+      "passed": true,
+      "milliseconds": 147
+    },
+    {
+      "name": "Corrupt saved JSON recovers to readable fresh course data",
+      "passed": true,
+      "milliseconds": 149
+    },
+    {
+      "name": "Denied localStorage preserves in-page notes and warns about persistence",
+      "passed": true,
+      "milliseconds": 156
+    },
+    {
+      "name": "Static reader contains ten lessons and solutions with JavaScript disabled",
+      "passed": true,
+      "milliseconds": 125
+    },
+    {
+      "name": "No runtime exceptions or missing assets were observed",
+      "passed": true,
+      "milliseconds": 0
+    }
+  ],
+  "errors": [],
+  "assetFailures": [],
+  "limits": [
+    "Teaching models only; no native Expo, camera, audio, API, or real account acceptance.",
+    "Source repository links intentionally reach outside this docs-only server and are not requested."
+  ],
+  "diagnostics": {
+    "initialManagedChromeAttempt": {
+      "outcome": "Interrupted by managed Chrome remote-debugging policy, not a page exception",
+      "passedGroups": 20,
+      "requestedGroups": 27,
+      "policyMessage": "DevTools remote debugging is disallowed by the system admin.",
+      "priorErrors": []
+    }
+  },
+  "passed": true,
+  "summary": {
+    "checks": 33,
+    "passed": 33,
+    "failed": 0
+  }
+}

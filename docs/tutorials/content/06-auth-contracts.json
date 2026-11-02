@@ -1,0 +1,71 @@
+{
+  "id": "06",
+  "slug": "auth-contracts",
+  "title": "Keep identity and data trustworthy",
+  "subtitle": "Follow a private garden request from an Expo screen through identity checks and shared data validation.",
+  "minutes": 50,
+  "stage": "Branch",
+  "prerequisites": ["You can explain a Query key and the difference between a successful request and valid data.", "You have completed lessons 01–05."],
+  "outcomes": ["You can separate signing in, permission to access a record, and checking a record's shape.", "You can explain where public configuration and private service credentials belong.", "You can keep local guest data distinct from an authenticated cloud garden."],
+  "intro": [
+    "A garden photograph may include a person's home, a private note, or a location. A friendly interface does not make this information safe by itself. The app needs a clear answer to three questions: who is making this request, which records may that person access, and does the data have the form the code expects? Each question needs its own check.",
+    "Plantopedia already has two ways to explore. A guest can use the local experience, while an authenticated session can call the private cloud API. This lesson traces that existing design. You will not create another authentication service or paste a secret into a mobile screen. You will learn to recognize the boundary where information leaves the device and why a server must make its own decisions."
+  ],
+  "sections": [
+    {
+      "title": "Signing in answers only the first question",
+      "paragraphs": [
+        "Signing in establishes an identity. In the cloud path, Clerk supplies a short-lived session token, which the API client sends in the Authorization header. The token is evidence for the server to verify. Merely receiving a string that looks like a token is insufficient. Plantopedia's server checks the token and expected issuer, and its active-session check also asks whether the session still belongs to that user and remains active.",
+        "Permission to access a particular plant is a separate question. Suppose Maya knows the identifier of Leo's rose. A signed-in Maya must still be unable to read Leo's notes. In the server code, verified identity is passed into application operations, and record paths are built within that owner's namespace. A form field such as owner: 'Leo' cannot be allowed to choose someone else's namespace. Hiding the detail button on Maya's screen would only change the interface; it would not protect the API.",
+        "These checks matter even when every caller uses your own React Native app. A person can construct a request without your interface. Treat the device as a place to present good choices and helpful errors, while the server remains responsible for enforcing access."
+      ],
+      "diagram": "security",
+      "callout": {"title": "Three different checks", "text": "Identity says who is asking. Authorization says which action that identity may perform. Validation says whether the submitted or returned data has an acceptable shape. Passing one check does not imply passing the other two."}
+    },
+    {
+      "title": "A TypeScript type cannot inspect a network response",
+      "paragraphs": [
+        "TypeScript helps while you write and check your program. Its type annotations do not travel with a server response. Writing a type assertion after response.json() does not examine the response and cannot prevent a missing nickname or a malformed list from reaching your screen. This is why Plantopedia shares Zod schemas between its mobile client and server.",
+        "Read the following small teaching function as a complete boundary around one request. The caller provides a fresh token, a URL, and a schema. The function checks whether the token exists, checks the HTTP status, and then parses the returned unknown value. A schema failure becomes an error instead of a successful but broken view. In production, use the richer existing apiClient, which also handles structured errors, lifecycle cancellation, and request timeouts.",
+        "Validation does not establish ownership. A perfectly shaped plant can still belong to another account. Likewise, a valid token does not make an empty nickname acceptable. Keeping these checks distinct makes both the code and its error messages easier to reason about."
+      ],
+      "code": {"language": "ts", "filename": "Teaching example: readPrivate.ts", "text": "import { z } from 'zod';\n\nexport async function readPrivate<T>(\n  url: string,\n  getToken: () => Promise<string | null>,\n  schema: z.ZodType<T>,\n  signal: AbortSignal,\n): Promise<T> {\n  const token = await getToken();\n  if (!token) throw new Error('Sign in to open your cloud garden.');\n  const response = await fetch(url, {\n    headers: { Authorization: `Bearer ${token}` },\n    signal,\n  });\n  if (!response.ok) throw new Error(`Request failed: ${response.status}`);\n  const value: unknown = await response.json();\n  return schema.parse(value);\n}"}
+    },
+    {
+      "title": "Public configuration is readable by the person running the app",
+      "paragraphs": [
+        "An API base URL tells the app where to send requests. A Clerk publishable key identifies the client-facing application. These are appropriate public configuration values. Expo includes referenced EXPO_PUBLIC values in the compiled client bundle, so the word environment does not make them secret. Renaming a private provider key to EXPO_PUBLIC_PROVIDER_KEY would expose it.",
+        "Private provider keys, Clerk server credentials, and Firebase Admin credentials belong on the server. A screen asks Plantopedia's API for a permitted operation. The server authenticates the request and calls its configured provider. This also lets the server enforce limits and keep private credentials away from mobile bundles and browser developer tools.",
+        "Do not print a token to understand a failed request. Record a safe operation name, an error code, and whether the request was cancelled instead. A useful debugging message identifies the failing boundary without copying credentials or private plant notes into logs. The existing public configuration schema also restricts the allowed API URL form, so follow the repository's setup instructions rather than improvising an insecure device URL."
+      ],
+      "callout": {"title": "A phone has its own localhost", "text": "A localhost URL on a physical phone points at the phone. Follow the README's HTTPS phone-access workflow and public URL validation rules when reaching an API on your development computer."}
+    },
+    {
+      "title": "Make account changes a resource boundary",
+      "paragraphs": [
+        "An account can change while a request is waiting. If Maya signs out and Leo signs in, Maya's late response must not become Leo's visible garden. An owner in the Query key separates cached results, but a key alone cannot cancel a microphone or stop pending work. Plantopedia creates owner-scoped API and voice resources inside SessionProvider, disposes the API scope on cleanup, and keys that provider by userId in the root layout.",
+        "The following screen excerpt uses the existing session and preferences providers. It explains that a guest action is local and offers a sign-in route for cloud features. It does not pretend that an interface message enforces server permissions. Guest storage and cloud storage are different paths, and this excerpt does not claim that signing in automatically migrates guest records.",
+        "This boundary should guide your own additions. Store drafts under the owner they were created for, include that owner in server-data cache keys, and close resources when their owner goes away. If a save has partly completed, preserve its original operation identity instead of silently replaying it as another account."
+      ],
+      "code": {"language": "tsx", "filename": "Provider-dependent teaching excerpt: CloudNotice.tsx", "text": "import { Text, Button, View } from 'react-native';\nimport { useRouter } from 'expo-router';\nimport { useSessionApi } from '../services/session';\n\nexport function CloudNotice() {\n  const { kind } = useSessionApi();\n  const router = useRouter();\n  if (kind === 'guest') {\n    return (\n      <View style={{ gap: 12 }}>\n        <Text>Your guest garden is stored locally.</Text>\n        <Button title=\"Sign in for cloud features\"\n          onPress={() => router.push('/login')} />\n      </View>\n    );\n  }\n  return <Text>Your cloud requests use your signed-in session.</Text>;\n}"}
+    }
+  ],
+  "lab": {"kind": "security", "title": "Trace a request across the trust boundary", "instructions": "Predict which check should reject a missing token, a wrong owner, and a malformed response. Change the lab's inputs one at a time and explain why a valid shape cannot replace permission."},
+  "quiz": [
+    {"question": "A screen hides Leo's plant from Maya. What still has to protect the record?", "options": ["The server must derive identity from verified credentials and enforce access to the requested record.", "A hard-to-guess route is sufficient.", "A TypeScript Plant annotation proves ownership."], "answer": 0, "explanation": "Maya can construct an API request without using the screen. The server must verify the caller and enforce record access. An identifier is a locator, and a type annotation describes expected data; neither grants or denies permission."},
+    {"question": "Where should a private plant-identification provider key live?", "options": ["In an EXPO_PUBLIC variable so every screen can reuse it.", "In server-only configuration used by the authenticated API.", "In a hidden Text component."], "answer": 1, "explanation": "The mobile or web bundle can be inspected. Public variables and hidden components cannot protect a private key. The server holds the credential and performs authorized provider requests on the caller's behalf."},
+    {"question": "The response has HTTP 200, but items is a string instead of an array. What should the client do?", "options": ["Treat it as a valid empty garden.", "Cast it to PlantPage and continue.", "Fail runtime validation and present a recoverable error."], "answer": 2, "explanation": "A successful HTTP status does not prove the body has the expected shape. Casting changes the compiler's assumption without checking the value. An explicit error preserves the difference between a real empty garden and invalid data."}
+  ],
+  "exercise": {
+    "title": "Draw and defend a private request",
+    "brief": "Build a small request trace for opening one cloud plant, then write the client validation boundary using the existing PlantDetail schema. Work in your course copy and use synthetic identities only.",
+    "steps": ["Draw Screen → apiClient → identity verification → owner-scoped plant lookup → validated response, and label where each check happens.", "Read src/services/api.ts and identify the line that attaches the bearer token and the line that parses the returned JSON.", "Write a teaching request function using PlantDetail.parse and a caller-supplied AbortSignal; do not hardcode a token.", "Explain the outcome for no token, a valid token belonging to another owner, an invalid JSON body, and a request cancelled during sign-out."],
+    "acceptance": ["Your diagram separates identity, permission, and data shape.", "Your code treats network data as unknown until parsing succeeds.", "Your account-change explanation includes both cache separation and resource cleanup.", "No provider key, session token, or real user record appears in your exercise files."],
+    "hint": "Follow the source of the owner on the server. If it came only from a form or a URL parameter, it cannot establish the caller's identity.",
+    "solution": "Use api.plant(id) from the existing session for the actual app. Its request helper obtains a token, attaches Authorization, checks response.ok, and parses PlantDetail. The server verifies identity and performs the lookup under that identity. A missing token fails authentication; another owner cannot select the private namespace; malformed JSON or schema mismatch fails parsing. On account change, disposing the old API aborts its lifecycle, while owner-prefixed Query keys prevent the new account from reusing the old account's cache. Guest data remains a separate local experience unless an explicit migration feature is designed."
+  },
+  "reflection": "If you add a public species catalogue next to private specimen notes, which fields can be public and which operations still need an authenticated owner? Explain your answer using the three checks from this lesson.",
+  "takeaways": ["A mobile interface helps people make choices, while the server enforces private data access.", "Shared runtime schemas verify data that TypeScript alone cannot inspect.", "Public Expo configuration is bundled into the client, and account changes require resource cleanup as well as cache separation."],
+  "repo": [{"path": "src/services/api.ts", "why": "The client obtains tokens, attaches credentials, checks status, and parses shared schemas."}, {"path": "src/services/session.tsx", "why": "Cloud and guest sessions create different owner-scoped resources."}, {"path": "server/src/http/identity.ts", "why": "The server verifies issuer, identity, and active session state."}, {"path": "server/src/application/plants.ts", "why": "Plant operations receive verified identity instead of trusting a submitted owner field."}, {"path": "src/config/public-env.ts", "why": "The app validates public configuration and allowed API URL forms."}],
+  "sources": [{"title": "Expo: environment variables", "url": "https://docs.expo.dev/guides/environment-variables/"}, {"title": "TanStack Query v5: query keys", "url": "https://tanstack.com/query/latest/docs/framework/react/guides/query-keys"}, {"title": "Clerk: manually verify session tokens", "url": "https://clerk.com/docs/guides/sessions/manual-jwt-verification"}]
+}
