@@ -100,6 +100,23 @@ export async function packageVercelOutput(root = defaultRoot) {
       {
         version: 3,
         routes: [
+          {
+            src: "^/tutorials(?:/.*)?$",
+            headers: {
+              "Cache-Control": "public, max-age=0, must-revalidate",
+              "X-Content-Type-Options": "nosniff",
+              "Content-Security-Policy":
+                "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'",
+              "Referrer-Policy": "strict-origin-when-cross-origin",
+            },
+            continue: true,
+          },
+          {
+            src: "^/tutorials$",
+            status: 308,
+            headers: { Location: "/tutorials/" },
+          },
+          { src: "^/tutorials/$", dest: "/tutorials/index.html" },
           { src: "^/$", status: 307, headers: { Location: "/plants" } },
           {
             src: "^/(?:login|plants(?:/[^/]+)?|scan|ask|settings|tasks|sso-callback)/?$",

@@ -68,6 +68,40 @@ test("clean source builds package generated static files and self-contained work
       readFileSync(join(functionDir, ".vc-config.json"), "utf8"),
     );
     assert.equal(config.runtime, "nodejs22.x");
+    const routes = JSON.parse(
+      readFileSync(join(output, "config.json"), "utf8"),
+    ).routes;
+    const matches = (path) =>
+      routes.filter((r) => r.src && new RegExp(r.src).test(path));
+    for (const path of [
+      "/tutorials",
+      "/tutorials/",
+      "/tutorials/index.html",
+      "/tutorials/assets/course.js",
+      "/tutorials/source/src/example.tsx.html",
+    ]) {
+      assert.equal(matches(path)[0].continue, true);
+      assert.equal(
+        matches(path)[0].headers["X-Content-Type-Options"],
+        "nosniff",
+      );
+      assert.match(
+        matches(path)[0].headers["Content-Security-Policy"],
+        /object-src 'none'/,
+      );
+      assert.match(
+        matches(path)[0].headers["Cache-Control"],
+        /must-revalidate/,
+      );
+    }
+    assert.equal(matches("/tutorials")[1].status, 308);
+    assert.equal(matches("/tutorials")[1].headers.Location, "/tutorials/");
+    assert.equal(matches("/tutorials/")[1].dest, "/tutorials/index.html");
+    assert.equal(matches("/tutorials/missing.js").length, 1);
+    assert.equal(matches("/plants")[0].dest, "/index.html");
+    assert.equal(matches("/v1/plants")[0].dest, "/api");
+    assert.equal(matches("/tutorials-other").length, 0);
+
     assert.equal(existsSync(join(functionDir, config.handler)), true);
     f.write("server/.vercel/output/static/stale.js", "stale");
     await packageVercelOutput(f.root);
