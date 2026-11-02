@@ -1,5 +1,6 @@
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { publishTutorials } from "./publish-tutorials.mjs";
 import { vercelWebConfig } from "./vercel-web-config.mjs";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
@@ -35,3 +36,5 @@ const result = spawnSync(
 );
 if (result.error) throw result.error;
 process.exitCode = result.status ?? 1;
+
+if (process.exitCode === 0) await publishTutorials(root);

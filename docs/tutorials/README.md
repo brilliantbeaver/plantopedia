@@ -100,3 +100,9 @@ python3 docs/tutorials/tools/build_course.py --archives-only
 ```
 
 The first command runs all ten notebooks in fresh kernels both with widgets and in the fallback mode. `--save` retains the widget-mode outputs. The second packages those executed notebooks without regenerating them. Optional browser integration checks are in `tools/browser_check.cjs`; they require Playwright and a local Chrome installation. Set `COURSE_URL` to the URL you are serving and `PLAYWRIGHT_MODULE` if Playwright is installed outside this checkout. The review record states the environments actually used.
+
+## Read the hosted course
+
+The public course is at <https://plantopedia-nine.vercel.app/tutorials/>. The address without the final slash redirects there so relative links work. This static learning site requires no app login.
+
+The guide was authored against the inspected development checkout. Some companion features are not yet merged into main, including the guest session API used in lessons 05 and 06, the lazy database API in lesson 08, and the species route. The browser and notebook models work independently; dependent TSX exercises need the matching companion app features. Hosted source pages show files available in the deployed repository revision and clearly label unavailable paths. [Publication and compatibility notes](publishing.md) explain this boundary and the deployment checks.
