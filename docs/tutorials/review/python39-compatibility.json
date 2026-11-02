@@ -1,0 +1,46 @@
+{
+  "python": "3.9.6",
+  "mode": "Direct sequential code-cell execution; optional widgets disabled; not an ipykernel run.",
+  "results": [
+    {
+      "notebook": "01-foundations.ipynb",
+      "passed": true
+    },
+    {
+      "notebook": "02-components.ipynb",
+      "passed": true
+    },
+    {
+      "notebook": "03-navigation.ipynb",
+      "passed": true
+    },
+    {
+      "notebook": "04-state.ipynb",
+      "passed": true
+    },
+    {
+      "notebook": "05-network.ipynb",
+      "passed": true
+    },
+    {
+      "notebook": "06-auth-contracts.ipynb",
+      "passed": true
+    },
+    {
+      "notebook": "07-camera.ipynb",
+      "passed": true
+    },
+    {
+      "notebook": "08-offline.ipynb",
+      "passed": true
+    },
+    {
+      "notebook": "09-cross-platform.ipynb",
+      "passed": true
+    },
+    {
+      "notebook": "10-quality.ipynb",
+      "passed": true
+    }
+  ]
+}

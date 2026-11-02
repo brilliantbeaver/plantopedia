@@ -1,0 +1,174 @@
+{
+  "id": "03",
+  "slug": "navigation",
+  "title": "Give every plant a place to go",
+  "subtitle": "Connect tabs and detail screens while preserving the identity of each individual specimen.",
+  "minutes": 45,
+  "stage": "Seedling",
+  "prerequisites": [
+    "You can pass a plant summary and a callback into a card.",
+    "You can distinguish an ID from a visible name."
+  ],
+  "outcomes": [
+    "You can translate an Expo Router filename into a route.",
+    "You can pass a specimen ID into a dynamic detail screen.",
+    "You can explain why route parameters do not authorize access to a record."
+  ],
+  "intro": [
+    "The east balcony lemon and the west window lemon look similar in a list. Selecting either should open that particular tree’s history. Navigation needs an identity that survives renaming, reordering, and a later identification correction. The label a reader sees is useful context, but the stable specimen ID determines which record the app opens.",
+    "Plantopedia uses Expo Router to connect file structure with screen structure. This lesson adds navigation to the card from lesson 02. You will separate tab destinations from detail screens, inspect a route parameter, and consider a reader who opens a detail link directly without first visiting the list."
+  ],
+  "sections": [
+    {
+      "title": "Read the file tree as a map",
+      "paragraphs": [
+        "Inside src/app, a regular filename becomes a route segment. The file search.tsx corresponds to /search. An index.tsx file is the default screen for its containing route. The parentheses in (tabs) create a route group: they organize screens and layouts without adding “(tabs)” to the public URL.",
+        "The file plants/[plantId].tsx contains square brackets because plantId is a value supplied by the destination. For example, /plants/lemon_east and /plants/lemon_west use the same screen component with different IDs. A layout file named _layout.tsx describes how its child screens relate through a stack, tabs, or shared providers.",
+        "In this app, src/app/_layout.tsx establishes the outer stack and shared providers, while src/app/(tabs)/_layout.tsx configures the tab area. You do not need to add a different component file for every saved tree. One detail route plus a parameter can display many individual histories. Keep non-route helpers in src/components, src/services, or a feature directory so the app directory remains a readable screen map."
+      ],
+      "diagram": "navigation",
+      "code": {
+        "language": "text",
+        "filename": "Selected routes in this checkout",
+        "text": "src/app/\n  _layout.tsx                 → shared providers and outer stack\n  (tabs)/\n    _layout.tsx               → tab navigation\n    index.tsx                 → /\n    plants.tsx                → /plants\n    scan.tsx                  → /scan\n  search.tsx                  → /search\n  plants/[plantId].tsx        → /plants/<one specimen ID>\n  species/[speciesId].tsx     → /species/<one catalog species ID>"
+      }
+    },
+    {
+      "title": "Turn a press into a specific destination",
+      "paragraphs": [
+        "The router exposes navigation functions that an event handler can call. push adds a destination to the navigation history. back returns through available history, while replace changes the current entry. Use the choice that matches the journey you want the reader to experience; the fact that all three can change the visible screen does not make their back behavior identical.",
+        "The teaching button below receives a specimen ID and sends it as the dynamic plantId parameter. Using the named pathname makes the connection between the file’s bracket name and the supplied parameter visible. The destination contains only the record identity. It does not contain a photograph, a whole mutable plant object, or a session token.",
+        "Passing an entire plant through a link would create a second copy of information that can become stale. Suppose the nickname changes on another device. A detail screen should load the current record for its ID, rather than trust the old nickname embedded in navigation. The next API lesson adds that loading step. For now, trace how the same button opens two different IDs."
+      ],
+      "code": {
+        "language": "tsx",
+        "filename": "Teaching component: OpenPlantButton.tsx",
+        "text": "import { useRouter } from \"expo-router\";\nimport { Button } from \"react-native\";\n\ntype Props = { plantId: string; nickname: string };\nexport function OpenPlantButton({ plantId, nickname }: Props) {\n  const router = useRouter();\n  return (\n    <Button title={`Open ${nickname}`} onPress={() => {\n      router.push({\n        pathname: \"/plants/[plantId]\",\n        params: { plantId },\n      });\n    }} />\n  );\n}"
+      }
+    },
+    {
+      "title": "Read the parameter before using it",
+      "paragraphs": [
+        "A route parameter is external input. A reader can type or change a URL; a link might also be old or malformed. The TypeScript type you supply to a hook helps you write code, but it does not prove that an incoming value obeys the application’s rules. Runtime validation performs that separate check.",
+        "The teaching detail route below uses the existing shared Id schema. It accepts one string and rejects an absent, repeated, or malformed value. The component deliberately displays the validated ID rather than pretending it has already loaded a plant. In lesson 05, that ID becomes part of the query key and API call.",
+        "The example includes a back action with a fallback. A detail screen opened from a list usually has a previous entry. A fresh deep link may not. Asking whether the router can go back prevents the screen from relying on a visit that never happened. The fallback replaces the current destination with /plants so the reader still has a clear way into the collection."
+      ],
+      "code": {
+        "language": "tsx",
+        "filename": "Teaching route: src/app/plants/[plantId].tsx in a learning copy",
+        "text": "import { Id } from \"@plantopedia/contracts\";\nimport { useLocalSearchParams, useRouter } from \"expo-router\";\nimport { Button, Text, View } from \"react-native\";\n\nexport default function PlantIdentityScreen() {\n  const { plantId } = useLocalSearchParams<{\n    plantId?: string | string[];\n  }>();\n  const router = useRouter();\n  const parsed = Id.safeParse(plantId);\n  function leave() {\n    if (router.canGoBack()) router.back();\n    else router.replace(\"/plants\");\n  }\n  return (\n    <View style={{ padding: 24, gap: 16 }}>\n      <Text>{parsed.success\n        ? `Specimen ID: ${parsed.data}`\n        : \"This plant link is not valid.\"}</Text>\n      <Button title=\"Back to your garden\" onPress={leave} />\n    </View>\n  );\n}"
+      }
+    },
+    {
+      "title": "Keep a species page separate from a specimen page",
+      "paragraphs": [
+        "A species describes a kind of plant. A specimen describes one particular plant someone photographed or saved. Both lemon trees may link to the same species catalog entry, while keeping different specimen IDs, photographs, observations, ownership, and places.",
+        "This distinction appears in the route tree. A species catalog page lives at species/[speciesId].tsx, while a saved individual lives at plants/[plantId].tsx. A care description for the species can help both trees. A note saying “I moved this tree into the shade today” belongs to one specimen. Routing by scientific name would collapse these different purposes.",
+        "Try renaming “East balcony lemon” to “Kitchen lemon.” Its specimen ID should stay the same, and a saved detail link should continue to identify that tree. Also consider an identification correction: a previously uncertain tree may later have a different scientific name. The specimen’s history should not disappear because its label became more accurate."
+      ],
+      "callout": {
+        "title": "A route names a request; the server checks permission",
+        "text": "A valid-looking specimen ID does not prove that the current account owns it. The API must authorize the request. Hiding a tab or validating the route string cannot replace that server check."
+      }
+    },
+    {
+      "title": "Make each destination explain its current state",
+      "paragraphs": [
+        "The current tab layout includes Explore, My Garden, Scan, and Ask. Settings remains routable but is hidden from the main tab bar through its options. This shows that “not visible as a tab” is a presentation choice, not the removal of the route or a permission rule.",
+        "A complete detail screen needs to explain loading, missing records, failed requests, and available records. These are different outcomes. A deleted specimen should not be shown as an empty editable record, and a slow connection should not be described as “no plants.” As you add data in later lessons, preserve this distinction between a destination existing and a requested record being available.",
+        "For a cross-platform check, open the same specimen from its card on a phone and from its URL on the web. Confirm that both resolve to the same identity. Then open the URL in a fresh browser tab. The second check is valuable because it removes assumptions about previous navigation and in-memory screen data."
+      ]
+    }
+  ],
+  "lab": {
+    "kind": "navigation",
+    "title": "Route two trees without confusing them",
+    "instructions": "Open each specimen, compare its ID with its species, and use Back. Predict what happens to the route when a nickname changes. Explain which values must remain stable."
+  },
+  "quiz": [
+    {
+      "question": "What URL does src/app/(tabs)/plants.tsx represent?",
+      "options": [
+        "/(tabs)/plants",
+        "/plants",
+        "/tabs/plants.tsx"
+      ],
+      "answer": 1,
+      "explanation": "The parentheses mark a route group and do not add a URL segment. The group can still provide a shared layout, so leaving it out of the URL does not make it meaningless."
+    },
+    {
+      "question": "Two saved trees have the same scientific name. What should identify their detail routes?",
+      "options": [
+        "Two distinct specimen IDs.",
+        "The scientific name alone.",
+        "Their current array positions."
+      ],
+      "answer": 0,
+      "explanation": "Each specimen needs a persistent identity for its own history. A shared species label cannot distinguish the trees, and an array position changes when the collection is reordered."
+    },
+    {
+      "question": "A route parameter passes the Id schema. What has this proved?",
+      "options": [
+        "The current account owns the plant.",
+        "The plant definitely exists on the server.",
+        "The value has the expected identifier shape."
+      ],
+      "answer": 2,
+      "explanation": "Shape validation rejects malformed input. Existence and authorization require separate server checks. A syntactically valid ID can still refer to a missing or inaccessible record."
+    }
+  ],
+  "exercise": {
+    "title": "Follow two specimens through one detail route",
+    "brief": "Connect the teaching cards to a dynamic route in a separate learning copy, then verify normal and direct-link journeys.",
+    "steps": [
+      "Create two sample lemon-tree summaries with different IDs and the same species name.",
+      "Replace the card’s alert callback with router.push using /plants/[plantId] and the selected ID.",
+      "Display the validated route parameter on the teaching detail screen.",
+      "Rename one specimen without changing its ID and explain why its saved route still has the same identity.",
+      "Open a detail URL directly on web and provide a Back fallback when no prior screen exists.",
+      "Describe, in writing, where a request for another account’s specimen must be rejected."
+    ],
+    "acceptance": [
+      "Each card opens the same route component with its own ID.",
+      "The route group does not appear in the public URL.",
+      "Malformed input produces an explanatory state.",
+      "The direct-link journey provides a usable exit even without prior history."
+    ],
+    "hint": "The bracket name plantId and the params object key must agree. Keep the hook calls above conditional rendering branches.",
+    "solution": "The parent callback calls router.push({ pathname: \"/plants/[plantId]\", params: { plantId: id } }). The destination reads useLocalSearchParams, validates the value with Id.safeParse, and displays either the validated identity or an invalid-link message. Use router.canGoBack() before router.back(), otherwise replace with /plants. Keep the nickname and species as display data; only the stable specimen ID chooses this history."
+  },
+  "reflection": "A plant is renamed and later identified as a different species. Explain which routes should stay stable, which catalog link may change, and where the observation history belongs.",
+  "takeaways": [
+    "Route groups organize layouts without changing public URL segments.",
+    "A dynamic route lets one component display many individual records.",
+    "Parameter validation, record existence, and account permission are separate checks."
+  ],
+  "repo": [
+    {
+      "path": "src/app/(tabs)/_layout.tsx",
+      "why": "Declares the main tab destinations and hides Settings from the tab bar."
+    },
+    {
+      "path": "src/app/plants/[plantId].tsx",
+      "why": "Reads the specimen route parameter and loads its owner-scoped detail query."
+    },
+    {
+      "path": "src/app/species/[speciesId].tsx",
+      "why": "Provides the distinct destination for shared species catalog information."
+    },
+    {
+      "path": "packages/contracts/src/index.ts",
+      "why": "Defines the runtime Id schema and separate record relationships."
+    }
+  ],
+  "sources": [
+    {
+      "title": "Expo Router file notation",
+      "url": "https://docs.expo.dev/router/basics/notation/"
+    },
+    {
+      "title": "Expo Router navigation",
+      "url": "https://docs.expo.dev/router/basics/navigation/"
+    }
+  ]
+}

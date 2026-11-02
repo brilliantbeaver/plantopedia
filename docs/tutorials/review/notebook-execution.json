@@ -1,0 +1,147 @@
+{
+  "python": "3.14.6",
+  "elapsed_seconds": 11.72,
+  "results": [
+    {
+      "notebook": "01-foundations.ipynb",
+      "mode": "widgets",
+      "passed": true,
+      "cells": 26,
+      "output_blocks": 7
+    },
+    {
+      "notebook": "02-components.ipynb",
+      "mode": "widgets",
+      "passed": true,
+      "cells": 26,
+      "output_blocks": 6
+    },
+    {
+      "notebook": "03-navigation.ipynb",
+      "mode": "widgets",
+      "passed": true,
+      "cells": 26,
+      "output_blocks": 6
+    },
+    {
+      "notebook": "04-state.ipynb",
+      "mode": "widgets",
+      "passed": true,
+      "cells": 26,
+      "output_blocks": 6
+    },
+    {
+      "notebook": "05-network.ipynb",
+      "mode": "widgets",
+      "passed": true,
+      "cells": 26,
+      "output_blocks": 5
+    },
+    {
+      "notebook": "06-auth-contracts.ipynb",
+      "mode": "widgets",
+      "passed": true,
+      "cells": 25,
+      "output_blocks": 5
+    },
+    {
+      "notebook": "07-camera.ipynb",
+      "mode": "widgets",
+      "passed": true,
+      "cells": 24,
+      "output_blocks": 5
+    },
+    {
+      "notebook": "08-offline.ipynb",
+      "mode": "widgets",
+      "passed": true,
+      "cells": 24,
+      "output_blocks": 6
+    },
+    {
+      "notebook": "09-cross-platform.ipynb",
+      "mode": "widgets",
+      "passed": true,
+      "cells": 27,
+      "output_blocks": 7
+    },
+    {
+      "notebook": "10-quality.ipynb",
+      "mode": "widgets",
+      "passed": true,
+      "cells": 25,
+      "output_blocks": 6
+    },
+    {
+      "notebook": "01-foundations.ipynb",
+      "mode": "fallback",
+      "passed": true,
+      "cells": 26,
+      "output_blocks": 6
+    },
+    {
+      "notebook": "02-components.ipynb",
+      "mode": "fallback",
+      "passed": true,
+      "cells": 26,
+      "output_blocks": 8
+    },
+    {
+      "notebook": "03-navigation.ipynb",
+      "mode": "fallback",
+      "passed": true,
+      "cells": 26,
+      "output_blocks": 5
+    },
+    {
+      "notebook": "04-state.ipynb",
+      "mode": "fallback",
+      "passed": true,
+      "cells": 26,
+      "output_blocks": 5
+    },
+    {
+      "notebook": "05-network.ipynb",
+      "mode": "fallback",
+      "passed": true,
+      "cells": 26,
+      "output_blocks": 5
+    },
+    {
+      "notebook": "06-auth-contracts.ipynb",
+      "mode": "fallback",
+      "passed": true,
+      "cells": 25,
+      "output_blocks": 5
+    },
+    {
+      "notebook": "07-camera.ipynb",
+      "mode": "fallback",
+      "passed": true,
+      "cells": 24,
+      "output_blocks": 5
+    },
+    {
+      "notebook": "08-offline.ipynb",
+      "mode": "fallback",
+      "passed": true,
+      "cells": 24,
+      "output_blocks": 5
+    },
+    {
+      "notebook": "09-cross-platform.ipynb",
+      "mode": "fallback",
+      "passed": true,
+      "cells": 27,
+      "output_blocks": 6
+    },
+    {
+      "notebook": "10-quality.ipynb",
+      "mode": "fallback",
+      "passed": true,
+      "cells": 25,
+      "output_blocks": 5
+    }
+  ],
+  "all_passed": true
+}

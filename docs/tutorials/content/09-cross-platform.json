@@ -1,0 +1,190 @@
+{
+  "id": "09",
+  "slug": "cross-platform",
+  "title": "Make one experience work across devices",
+  "subtitle": "Use platform files, readable glass, flexible language, and explicit voice cleanup without promising identical capabilities.",
+  "minutes": 60,
+  "stage": "Canopy",
+  "prerequisites": [
+    "You can explain owner-scoped resources and durable native drafts.",
+    "You can build an accessible component with props and state."
+  ],
+  "outcomes": [
+    "You can choose a small platform check or a separate platform file for the right reason.",
+    "You can explain why an opaque surface is a valid glass fallback.",
+    "You can trace microphone, connection, playback, and cleanup states without confusing them with one loading flag."
+  ],
+  "intro": [
+    "Cross-platform work aims to preserve the person's task while adapting to the device. A person should be able to find a plant, read its notes, and understand a save failure on a phone or in a browser. That does not mean every platform uses the same storage, native visual effect, or audio implementation. Good shared code makes those differences explicit behind a small, dependable interface.",
+    "Plantopedia already demonstrates this pattern. It imports GlassSurface without naming a platform, while the bundler chooses the iOS, browser, or default implementation. Audio and photo helpers use similar boundaries. This lesson connects those code choices to readable design, translated text, and a voice experience that releases the microphone when its session ends."
+  ],
+  "sections": [
+    {
+      "title": "Share a contract and vary the implementation",
+      "paragraphs": [
+        "Use Platform.OS for a small local difference, such as a platform-specific explanation. When the entire implementation differs, a separate file is easier to read and test. In this repository, GlassSurface.ios.tsx uses the native glass API when suitable, GlassSurface.web.tsx uses browser capabilities, and GlassSurface.tsx provides a regular surface. Callers keep one import and the same ViewProps-shaped interface.",
+        "The teaching default surface below is intentionally simple and fully opaque. Put platform variants beside it only when you have a concrete need. A .web.tsx implementation can contain browser-only CSS capability checks; those checks should not leak into the native component. A shared import does not imply that every platform file has identical internals or lifetime guarantees.",
+        "The same reasoning explains storage and audio boundaries. A browser preview can help test screen flow while a native module handles continuous microphone frames. Name those limits in the product and in your acceptance evidence. A simulated permission button in this course cannot prove that an iOS microphone session releases correctly."
+      ],
+      "code": {
+        "language": "tsx",
+        "filename": "Teaching example: StudySurface.tsx",
+        "text": "import { StyleSheet, View, type ViewProps } from 'react-native';\n\nexport function StudySurface({ style, ...props }: ViewProps) {\n  return <View {...props} style={[styles.surface, style]} />;\n}\nconst styles = StyleSheet.create({\n  surface: {\n    backgroundColor: '#FFFFFF', borderColor: '#B8D4CC',\n    borderWidth: 1, borderRadius: 24, padding: 20, gap: 12,\n  },\n});\n// StudySurface.ios.tsx and StudySurface.web.tsx can later\n// export the same component API with different implementations.\n// Callers keep: import { StudySurface } from './StudySurface';"
+      }
+    },
+    {
+      "title": "Make glass support reading instead of competing with it",
+      "paragraphs": [
+        "A vivid background can make an interface feel alive, but text needs a stable reading surface. A translucent card may look clear over one illustration and become difficult over another. Place strong text on a sufficiently solid surface, use generous spacing, and keep the most important action visually distinct. Decorative color should help orientation without becoming the only way to recognize a failure or selection.",
+        "Plantopedia's iOS implementation begins conservatively with reduced transparency enabled, reads the system preference, listens for changes, and falls back to a regular View when transparency should be reduced or a glass capability is unavailable. Its browser implementation also checks contrast preference and backdrop-filter support. The default implementation remains a regular View. These are deliberate ways to preserve the task, not an incomplete version of the experience.",
+        "Treat motion similarly. Animation may explain a transition, but it should not be necessary to understand a status. Respect reduced-motion preferences, allow a static illustration, and keep progress text available. This course uses vector graphics because they stay sharp at different sizes, while its diagrams still need text descriptions and a sensible reading order. Test the smallest layout, enlarged text, keyboard focus, and light and dark surfaces before adding more blur."
+      ],
+      "diagram": "layout",
+      "callout": {
+        "title": "A fallback must keep the task intact",
+        "text": "When glass is unavailable or reduced transparency is requested, the person should still see the same content and actions on a readable surface. Visual parity is less important than task continuity."
+      }
+    },
+    {
+      "title": "Let language and text size change the layout",
+      "paragraphs": [
+        "A translated action can be much longer than its English version. Fixed-height text boxes and narrow icon-only actions can therefore fail even on a screen that looked balanced during initial design. Allow text to wrap, let rows grow, and use minimum touch sizes rather than assuming one short label. Test a large font scale together with a narrow screen, because these conditions interact.",
+        "Plantopedia's preferences provider resolves Light, Dark, or System appearance and exposes a translation function for seven dictionaries. Components ask for a message key instead of scattering duplicated English strings through the interface. The following provider-dependent excerpt uses existing message keys. Notice that its action has an explicit role and label, its text is allowed to grow, and the colors come from the resolved theme.",
+        "Do not translate an arbitrary error code by displaying it directly as prose. Map expected codes to useful local messages and an action, while preserving a safe code for diagnosis. Likewise, a species' scientific name and a person's chosen nickname have different translation rules from interface copy. Keep specimen identity stable while presentation language changes."
+      ],
+      "code": {
+        "language": "tsx",
+        "filename": "Provider-dependent teaching excerpt: GardenInvitation.tsx",
+        "text": "import { Pressable, Text, View } from 'react-native';\nimport { useRouter } from 'expo-router';\nimport { usePreferences } from '../theme/preferences';\n\nexport function GardenInvitation() {\n  const { colors, t } = usePreferences();\n  const router = useRouter();\n  return <View style={{ gap: 12, padding: 20, backgroundColor: colors.surface }}>\n    <Text style={{ color: colors.text, fontSize: 24, fontWeight: '700' }}>\n      {t('myGarden')}\n    </Text>\n    <Pressable accessibilityRole=\"button\" accessibilityLabel={t('scan')}\n      onPress={() => router.push('/scan')}\n      style={{ minHeight: 48, padding: 14, borderRadius: 16,\n        justifyContent: 'center', backgroundColor: colors.primary }}>\n      <Text style={{ color: colors.onPrimary, fontSize: 17 }}>{t('scan')}</Text>\n    </Pressable>\n  </View>;\n}"
+      }
+    },
+    {
+      "title": "Voice is a resource lifecycle, not a single spinner",
+      "paragraphs": [
+        "Continuous voice involves permission, hardware, a server connection, microphone input, received captions, queued playback, and interruptions. A single busy flag cannot explain whether the app is waiting for permission, listening, processing, or playing. Plantopedia's voice state describes these phases and also tracks facts such as muted and playingAudio. The interface can therefore give a useful action at each point.",
+        "The default session controller creates a live voice transport for an owner. Its native audio factory looks for the local PlantopediaVoice module, requests microphone permission, and subscribes to audio, played, and failure events. Expo Go does not contain that custom native bridge, so continuous native voice requires a development build that includes it. Reinstalling JavaScript dependencies or refreshing Metro does not add native code to an already installed binary.",
+        "Connection setup and playback can finish after a person presses End. The transport uses a generation counter to distinguish the current run from an old one. Cleanup advances that counter, detaches socket handlers, closes the socket, clears timers and queued audio, and disposes the audio resource. A late event from the old run must not revive the microphone or publish a stale caption into a new session."
+      ],
+      "diagram": "voice"
+    },
+    {
+      "title": "Choose the owner of cleanup carefully",
+      "paragraphs": [
+        "A controller can outlive a dock even though its active connection ends when the route loses focus. Plantopedia keeps one owner-scoped voice controller in the session so individual route components do not each create a competing microphone. VoiceDock explicitly disconnects that connection during route-focus cleanup. Its cloud session also disconnects when the app becomes inactive and releases resources on cleanup. Signing out must release owner resources too. Read the existing ownership path before adding another useEffect that starts audio automatically.",
+        "The teaching hook below shows only the cleanup idea for an injected resource. It neither starts recording nor replaces the production SessionProvider. Its dependency must be stable; if a caller creates a new object every render, cleanup will repeatedly disconnect it. The onFailure callback should be stable too. The production transport performs its own detailed teardown and stale-event checks.",
+        "Captions and a text interaction path should remain useful when audio playback is blocked or the microphone is denied. Test denial, repeated start/end taps, backgrounding, disconnect during playback, and an account change. The lab demonstrates the state decisions with synthetic events; it cannot establish acoustic quality, interruption sensitivity, or actual native hardware release."
+      ],
+      "code": {
+        "language": "tsx",
+        "filename": "Teaching excerpt: useVoiceCleanup.ts",
+        "text": "import { useEffect } from 'react';\nimport { AppState } from 'react-native';\n\ntype Resource = { disconnect(): Promise<void> };\nexport function useVoiceCleanup(\n  resource: Resource, onFailure: (error: unknown) => void,\n) {\n  useEffect(() => {\n    const stop = () => { void resource.disconnect().catch(onFailure); };\n    const subscription = AppState.addEventListener('change', state => {\n      if (state !== 'active') stop();\n    });\n    return () => { subscription.remove(); stop(); };\n  }, [resource, onFailure]);\n}"
+      }
+    }
+  ],
+  "lab": {
+    "kind": "voice",
+    "title": "End a session before a late event arrives",
+    "instructions": "Predict which voice events are still allowed after End. Start, interrupt, and end the teaching session, then compare the displayed state with your prediction. Explain what real-device evidence would still be needed for microphone release."
+  },
+  "quiz": [
+    {
+      "question": "When native glass is unavailable or reduced transparency is enabled, what should happen?",
+      "options": [
+        "Hide the content that normally sits on glass.",
+        "Keep the same task available on a readable opaque surface.",
+        "Force blur because visual consistency is more important."
+      ],
+      "answer": 1,
+      "explanation": "The surface is there to support the person's task. A readable regular View preserves content and actions across capabilities and accessibility preferences. Hiding content or forcing transparency would undermine that purpose."
+    },
+    {
+      "question": "Why can Expo Go preview screens but fail continuous native voice in this app?",
+      "options": [
+        "Expo Go cannot render Text components.",
+        "A .tsx file always requires Xcode.",
+        "Its installed native binary does not include the custom PlantopediaVoice bridge."
+      ],
+      "answer": 2,
+      "explanation": "JavaScript can only call native modules present in the installed binary. A matching development build includes the custom bridge. Refreshing JavaScript does not insert native code into Expo Go."
+    },
+    {
+      "question": "An old socket event arrives after End and a new Start. What should prevent it from updating the new session?",
+      "options": [
+        "A run identity or generation check that recognizes the event as stale.",
+        "The button's visual opacity.",
+        "Changing the plant nickname."
+      ],
+      "answer": 0,
+      "explanation": "Asynchronous events can outlive the action that created them. A generation check ties each event to the current run. Visual styling and unrelated record data do not establish that lifecycle relationship."
+    }
+  ],
+  "exercise": {
+    "title": "Run a cross-platform continuity review",
+    "brief": "Review one plant card and one voice flow across visual, language, and resource boundaries. Record observed behavior separately from simulated behavior.",
+    "steps": [
+      "List the shared import and selected implementation for GlassSurface on iOS, web, and the default native path.",
+      "Render a card with enlarged text and long translated labels; explain any clipping and adjust the teaching layout to grow.",
+      "Compare a vivid translucent surface with a solid surface and verify that status remains understandable without color or motion alone.",
+      "Draw start → permission → connecting → listening → playback/interrupt → end, including a denial path and a late-event path.",
+      "Write a device checklist for denied microphone permission, backgrounding, disconnect during playback, and signing out."
+    ],
+    "acceptance": [
+      "Each platform preserves the main task even when a visual or audio capability is unavailable.",
+      "The card can wrap long labels without shrinking the touch action below its intended minimum.",
+      "Your voice trace names the resource owner and the point that invalidates stale events.",
+      "Your evidence explicitly distinguishes browser models from native hardware acceptance."
+    ],
+    "hint": "Follow resource creation to its matching disposal. For visual testing, combine narrow width, long text, and large font size instead of testing each only in isolation.",
+    "solution": "Keep a shared component API and let platform files vary its internals. Use an opaque readable fallback when glass is unavailable or reduced transparency is requested. Let text wrap and resolve copy through the preferences provider. Keep the live transport in the owner-scoped session, disconnect and dispose its audio/socket resources at the appropriate lifecycle boundary, and ignore events from previous generations. A diagram or mocked test supports the state logic, while a development build on a physical device supplies the remaining camera/audio evidence."
+  },
+  "reflection": "If the browser can display the same voice dock as iOS, which facts still need separate verification before you claim equal voice support? Explain implementation selection, permission, playback, and cleanup.",
+  "takeaways": [
+    "Cross-platform design shares task contracts while allowing implementation differences.",
+    "Readable opaque surfaces, flexible text, and static feedback are complete accessibility choices.",
+    "Voice sessions need a stable owner, detailed states, stale-event protection, and explicit resource release."
+  ],
+  "repo": [
+    {
+      "path": "src/theme/GlassSurface.ios.tsx",
+      "why": "The iOS surface checks glass capability and reduced-transparency preference."
+    },
+    {
+      "path": "src/theme/GlassSurface.web.tsx",
+      "why": "Browser appearance checks contrast, transparency, and backdrop-filter support."
+    },
+    {
+      "path": "src/theme/preferences.tsx",
+      "why": "The app resolves theme and message dictionaries through one provider."
+    },
+    {
+      "path": "src/services/voice-session.ts",
+      "why": "One owner-scoped voice controller survives individual dock and route components."
+    },
+    {
+      "path": "src/platform/live-voice.ts",
+      "why": "The transport coordinates socket/audio state and invalidates stale runs during cleanup."
+    },
+    {
+      "path": "src/platform/stream-audio.ts",
+      "why": "The native implementation requires the custom bridge and disposes listeners and hardware."
+    }
+  ],
+  "sources": [
+    {
+      "title": "React Native 0.86: platform-specific code",
+      "url": "https://reactnative.dev/docs/0.86/platform-specific-code"
+    },
+    {
+      "title": "React Native 0.86: accessibility",
+      "url": "https://reactnative.dev/docs/0.86/accessibility"
+    },
+    {
+      "title": "Expo SDK 57: GlassEffect",
+      "url": "https://docs.expo.dev/versions/v57.0.0/sdk/glass-effect/"
+    },
+    {
+      "title": "Expo: introduction to development builds",
+      "url": "https://docs.expo.dev/develop/development-builds/introduction/"
+    }
+  ]
+}

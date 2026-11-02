@@ -1,0 +1,171 @@
+{
+  "id": "01",
+  "slug": "foundations",
+  "title": "From an idea to a living screen",
+  "subtitle": "Follow one Plantopedia screen from a JavaScript function to a phone, and choose the right Expo runtime.",
+  "minutes": 40,
+  "stage": "Seed",
+  "prerequisites": [
+    "You can read a JavaScript function, an object, and an array.",
+    "You know how to open a terminal in a project folder."
+  ],
+  "outcomes": [
+    "You can explain the separate jobs of React, React Native, Expo, and the API.",
+    "You can start the appropriate preview without replacing the repository’s pinned dependencies.",
+    "You can identify a feature that needs a native development build."
+  ],
+  "intro": [
+    "Imagine that you have photographed two young lemon trees. Both trees belong to the same species, but one lives on a sunny balcony and the other lives beside a shaded window. Plantopedia keeps their photographs and observations separate. Over this course, you will build up the ideas needed for that experience: a useful screen, a stable identity for each plant, changes the reader can see, and records that survive an interrupted connection.",
+    "This lesson starts with a small screen and an accurate map of where its parts run. You do not need a cloud account to read the course or operate its browser experiments. Those experiments are JavaScript teaching models. They do not run Expo, draw native phone controls, open a camera, or test real authentication. The Jupyter notebooks display React Native examples and run small Python models of the same ideas. Run actual TSX components in an Expo learning project or a separate learning copy of this repository."
+  ],
+  "sections": [
+    {
+      "title": "Give each layer a clear job",
+      "paragraphs": [
+        "React describes a screen as a tree of components. A component is a function that returns the pieces the reader should see. React Native supplies pieces such as View, Text, and Pressable and connects that description to each supported platform. Expo supplies development tools and libraries for jobs such as using the camera. These names work together, but they do not mean the same thing.",
+        "Plantopedia also has a separate server. The phone asks that server for private plant records, and the server checks who is asking before using its storage and external providers. The mobile component does not hold a Firebase administrator credential or a private AI provider key. When the network fails, a component can still display local information; the server has not moved inside the phone.",
+        "Find the three large code areas before editing anything. The src directory holds the app, server holds the API, and packages/contracts holds shared definitions that both sides can check. A shared definition describes a record; it is not a shared database. This distinction will become important when a saved draft exists on the phone but has not reached the server."
+      ],
+      "diagram": "runtime"
+    },
+    {
+      "title": "Use the versions this app was built with",
+      "paragraphs": [
+        "This checkout pins Expo 57, React Native 0.86.3, React 19.2.3, and TanStack Query 5.104.3. Its README specifies Node 22.23.1 and npm 12.0.2. Use the repository’s lockfile and scripts for this course. A command copied from a newly published tutorial may create a different Expo project, so creating a fresh latest project is a separate experiment rather than a repair for this checkout.",
+        "Run the installation commands from the repository root. npm ci installs the locked workspace dependencies and runs the repository’s guarded installation patches. Building contracts produces the shared package’s compiled files. The environment setup script creates a dummy local configuration only when the file is absent. It preserves an existing file, so it does not fill in missing settings for you.",
+        "For an existing working checkout, do not reinstall simply to read a lesson. If an installation fails, read the first error and the README’s compatibility notes. Do not use force flags to make a dependency disagreement disappear. A successful installation means tools are present; it does not prove that credentials, network access, camera permissions, or cloud resources are ready."
+      ],
+      "code": {
+        "language": "bash",
+        "filename": "Repository setup, run from the repository root",
+        "text": "node --version\nnpm --version\nnpm ci\nnpm run build:contracts\nnode scripts/setup-env.mjs"
+      }
+    },
+    {
+      "title": "Choose a preview that contains your feature",
+      "paragraphs": [
+        "Expo Go is an installed preview app with a predefined set of native capabilities. A development build is your own app binary with your chosen native modules and developer tools. JavaScript can change quickly while that binary is running. Adding a new native module changes what the binary must contain and therefore requires a matching rebuild.",
+        "In this repository, npm start selects Expo Go. After a custom Plantopedia development client has been built and installed, npm run start:dev-client selects that client. The continuous native Voice Chat feature depends on the local PlantopediaVoice module, which Expo Go does not contain. A working card or camera preview in Expo Go is not evidence that this voice bridge will run there.",
+        "For localhost browser development, use npm run web:local and follow the README’s local authentication profile instructions. The script coordinates a local API and the browser app. This checkout’s native profile and localhost browser profile can use different Clerk instances, so stop Metro before switching profiles. EAS cloud builds can compile the native app without a local Xcode or Android Studio installation; running local simulators is a separate workflow."
+      ],
+      "callout": {
+        "title": "Preview the right boundary",
+        "text": "A browser preview is useful for layout, routes, and many state changes. A real phone is still required for meaningful camera, audio, interruption, and permission acceptance checks."
+      }
+    },
+    {
+      "title": "Read your first component slowly",
+      "paragraphs": [
+        "The WelcomeCard below is a complete teaching component. It imports the native pieces it uses, defines a function, and returns a View containing two Text children. The name prop is an input supplied by its parent. Curly braces place the value of a JavaScript expression inside the returned screen description.",
+        "StyleSheet.create groups styles under names. The numeric spacing values are layout units, not instructions to draw a particular number of physical screen pixels. flexDirection is column by default in React Native, so these two text items appear one below the other. Nothing in this component makes a request or saves data; its job is deliberately small.",
+        "To try it in a separate learning copy, place it in src/components/WelcomeCard.tsx and import it into a route. Do not replace src/app/_layout.tsx with this component: that file hosts the real app’s providers and navigation. Changing the visible greeting should require changing the input or text, without dismantling those shared responsibilities."
+      ],
+      "diagram": "components",
+      "code": {
+        "language": "tsx",
+        "filename": "Teaching component: WelcomeCard.tsx",
+        "text": "import { StyleSheet, Text, View } from \"react-native\";\n\ntype Props = { name: string };\nexport default function WelcomeCard({ name }: Props) {\n  return (\n    <View style={styles.card}>\n      <Text style={styles.title}>Hello, {name}.</Text>\n      <Text>Your next plant discovery starts here.</Text>\n    </View>\n  );\n}\nconst styles = StyleSheet.create({\n  card: { padding: 20, gap: 8, borderRadius: 24,\n    backgroundColor: \"#E5FFF1\" },\n  title: { fontSize: 24, fontWeight: \"700\", color: \"#12382B\" },\n});"
+      }
+    },
+    {
+      "title": "Explain what a failed preview actually tells you",
+      "paragraphs": [
+        "A phone’s localhost refers to that phone, not to your laptop. Plantopedia’s public configuration accepts HTTPS API addresses and HTTP loopback addresses for local development; it does not accept an arbitrary HTTP LAN address. A physical phone therefore needs a reachable HTTPS API endpoint. Successfully scanning Metro’s QR code only proves that the phone found the app’s development bundle, not that it can reach the separate API.",
+        "The current app can show a guest experience when cloud configuration or sign-in is absent. Guest records and authenticated cloud records have different owners and different capabilities. For configured cloud development, synthetic AI provider mode still requires the matching Clerk and Firebase setup described in the README. It does not replace those services with memory-only storage. Start by naming which experience you are testing, then diagnose the first failing boundary."
+      ]
+    }
+  ],
+  "lab": {
+    "kind": "runtime",
+    "title": "Choose the runtime before you run",
+    "instructions": "Predict which preview can run a simple card, a camera workflow, and the custom native voice bridge. Change the runtime and feature controls. Explain why downloading JavaScript cannot add a missing native module."
+  },
+  "quiz": [
+    {
+      "question": "The card renders in Expo Go, but the custom native voice bridge is missing. What should you do?",
+      "options": [
+        "Install a matching Plantopedia development build, then use the development-client command.",
+        "Add another Text component to load the native module.",
+        "Put a private provider key in the greeting component."
+      ],
+      "answer": 0,
+      "explanation": "The native module must be compiled into the installed app binary. A JavaScript change cannot create that compiled module. Provider credentials belong on the server and do not fix a missing native capability."
+    },
+    {
+      "question": "Your physical phone loads the bundle but cannot call http://localhost:3001. What does localhost identify there?",
+      "options": [
+        "The nearest laptop on Wi-Fi.",
+        "The phone itself.",
+        "The Expo documentation server."
+      ],
+      "answer": 1,
+      "explanation": "Loopback identifies the device making the request. Metro and the API are separate connections. This repository requires a reachable HTTPS API address on a physical phone."
+    },
+    {
+      "question": "Why does this course use npm ci for this repository?",
+      "options": [
+        "It silently updates Expo to whichever release is newest.",
+        "It provisions all cloud services.",
+        "It installs the dependency versions recorded in the lockfile."
+      ],
+      "answer": 2,
+      "explanation": "The lockfile is the reproducible starting point for the checked-in app. Installation does not provision services or prove native acceptance. Updating framework versions is a separate task."
+    }
+  ],
+  "exercise": {
+    "title": "Trace one greeting through the app",
+    "brief": "In a separate learning copy, add the WelcomeCard to an existing route and explain every boundary involved in seeing it. You can complete the written part without accounts.",
+    "steps": [
+      "Write a four-sentence explanation of React, React Native, Expo, and the server before running commands.",
+      "Check the Node and npm versions against the README, then use the locked setup commands if the learning copy needs installation.",
+      "Render WelcomeCard with your name and change its supporting sentence. Keep the existing root providers.",
+      "Choose browser, Expo Go, or a development client and record which feature you can actually verify there.",
+      "Write down the difference between reaching Metro and reaching the API. Do not copy credentials into your notes."
+    ],
+    "acceptance": [
+      "Your route displays a greeting supplied through a prop.",
+      "You can name the directory holding the component, the API, and the shared contracts.",
+      "Your notes correctly identify native voice as requiring the custom binary."
+    ],
+    "hint": "Find the existing Screen and Card usage in the Explore route. A new small component can sit inside that screen without replacing its layout.",
+    "solution": "Import WelcomeCard from ../../components/WelcomeCard in a route under src/app/(tabs), then add <WelcomeCard name=\"Avery\" /> inside its existing Screen. React evaluates the component, React Native maps its pieces to the target, and Expo supplies the preview/build tools. The greeting needs no API request. A cloud plant list does, and the phone must reach that API independently of Metro."
+  },
+  "reflection": "If a JavaScript greeting update appears immediately but a new native library still reports “module missing,” which part of the installed application needs to change, and why?",
+  "takeaways": [
+    "A small component has a clear input and a clear visible result.",
+    "A successful bundle connection does not prove that the API is reachable.",
+    "Expo Go and a custom development client contain different native capabilities."
+  ],
+  "repo": [
+    {
+      "path": "package.json",
+      "why": "Records the framework versions, workspace scripts, and default Expo Go runtime."
+    },
+    {
+      "path": "README.md",
+      "why": "Defines the local environment profiles, setup commands, cloud prerequisites, and native voice limitation."
+    },
+    {
+      "path": "src/app/_layout.tsx",
+      "why": "Places preferences, query, session, and navigation providers around route screens."
+    },
+    {
+      "path": "src/config/public-env.ts",
+      "why": "Validates public API and authentication configuration before use."
+    }
+  ],
+  "sources": [
+    {
+      "title": "Expo development builds",
+      "url": "https://docs.expo.dev/develop/development-builds/introduction/"
+    },
+    {
+      "title": "Expo Router introduction",
+      "url": "https://docs.expo.dev/router/introduction/"
+    },
+    {
+      "title": "Expo public environment variables",
+      "url": "https://docs.expo.dev/guides/environment-variables/"
+    }
+  ]
+}

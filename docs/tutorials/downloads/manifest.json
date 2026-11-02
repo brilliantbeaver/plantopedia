@@ -1,0 +1,54 @@
+{
+  "lesson-01.zip": {
+    "bytes": 19141,
+    "sha256": "eec5f87b4f5893fc34ae8a7eb4dc723abc9865131aecfb7531580e16e4194b24"
+  },
+  "lesson-02.zip": {
+    "bytes": 20645,
+    "sha256": "37d3b31fa581795b8fcb2b71e9f9f3f225035ba657a5cf83317bbd25ffc5d1d5"
+  },
+  "lesson-03.zip": {
+    "bytes": 20033,
+    "sha256": "4a0fa817bfdfc9f321e899bfb8da5da3984d8a10a31df16fb5e085c111aa7197"
+  },
+  "lesson-04.zip": {
+    "bytes": 19146,
+    "sha256": "1e239fcba71299310d0b2d0e8c286ff1ee169df9dd3ba5d547276da9afeef41b"
+  },
+  "lesson-05.zip": {
+    "bytes": 19628,
+    "sha256": "fa4b4b6078cb6d59e0100cd22c68ecc9788d63fdc061ebe99d1db9adc5cb26d4"
+  },
+  "lesson-06.zip": {
+    "bytes": 19534,
+    "sha256": "5c1cc64bb34453184393a0920e07046c511a221170d90cd3825355875cb31410"
+  },
+  "lesson-07.zip": {
+    "bytes": 20867,
+    "sha256": "eb85c8063f5afd8b6b63c5af9dae16792a97af9b6aaa99d39342c086e99dfcc3"
+  },
+  "lesson-08.zip": {
+    "bytes": 23188,
+    "sha256": "091f6ffecccb33b867528deaced6f50431b66ac319ba9aefd4d78db80894f9ab"
+  },
+  "lesson-09.zip": {
+    "bytes": 24134,
+    "sha256": "1514cbe32bd4dfd0a237dd8c434d653ea04b2f53d66a7bfcf1a2a2f22ff461fd"
+  },
+  "lesson-10.zip": {
+    "bytes": 21971,
+    "sha256": "1b9a45ef6a6a8ce371912fae6d79e6fc259c3b84ed00042d3ea5b85e84da76ea"
+  },
+  "plantopedia-course-kit.zip": {
+    "bytes": 1930023,
+    "sha256": "12ff8a2a63930a18dc6d963e1b567a52b11ed2c97c4223be8c4bd51fe4fdac2d"
+  },
+  "plantopedia-exercises.zip": {
+    "bytes": 65055,
+    "sha256": "f30bd40693f7361bf65bdef75a20fa7a66b749d730eed8fc5ed002bc25bfbc7b"
+  },
+  "plantopedia-notebooks.zip": {
+    "bytes": 121431,
+    "sha256": "ef9c3ccf246eb908e0034e76d6e8f087e331bd8c85ca7d262e46c10323919a74"
+  }
+}

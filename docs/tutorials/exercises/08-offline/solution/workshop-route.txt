@@ -1,0 +1,3 @@
+// Save this as src/app/workshop.tsx after copying the other solution files
+// into src/features/tutorial-offline/.
+export { default } from "../features/tutorial-offline/OfflineLab";
