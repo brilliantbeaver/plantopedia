@@ -6,7 +6,7 @@ import {
   waitFor,
 } from "@testing-library/react-native";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import Explore from "../../src/app/(tabs)/index";
+import Explore from "../../src/app/(tabs)/explore";
 import Plants from "../../src/app/(tabs)/plants";
 import { PreferencesProvider } from "../../src/theme/preferences";
 
@@ -28,7 +28,10 @@ jest.mock("../../src/services/session", () => ({
     owner: mockOwner,
   }),
 }));
-jest.mock("expo-router", () => ({ useRouter: () => ({ push: mockPush }) }));
+jest.mock("expo-router", () => ({
+  useRouter: () => ({ push: mockPush }),
+  useLocalSearchParams: () => ({}),
+}));
 jest.mock("../../src/components/PlantCard", () => ({
   PlantCard: ({ plant }: { plant: { nickname: string } }) => {
     const { Text } = jest.requireActual("react-native");
@@ -68,7 +71,7 @@ test("an empty collection welcomes the user and starts the photo flow", async ()
   expect(screen.getByText("Your collection starts here")).toBeOnTheScreen();
   expect(screen.queryByText("Recent discoveries")).toBeNull();
   expect(screen.queryByText(/draft is retained/)).toBeNull();
-  fireEvent.press(screen.getByRole("button", { name: "Add your first plant" }));
+  fireEvent.press(screen.getByRole("button", { name: "Scan" }));
   expect(mockPush).toHaveBeenCalledWith("/scan");
 });
 
@@ -77,9 +80,7 @@ test("a background lookup never blocks the welcoming start or claims the collect
   showHome();
   await screen.findByText("Discover the plants around you.");
   expect(screen.queryByText("Loading your plants…")).toBeNull();
-  expect(
-    screen.getByRole("button", { name: "Start with a photo" }),
-  ).toBeOnTheScreen();
+  expect(screen.getByRole("button", { name: "Scan" })).toBeOnTheScreen();
   expect(screen.queryByText("Meet your first plant.")).toBeNull();
   expect(screen.queryByText("Your collection starts here")).toBeNull();
   expect(screen.queryByText("Recent discoveries")).toBeNull();
@@ -96,7 +97,7 @@ test("a first visit with a failed background lookup keeps the photo invitation a
   expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
   expect(screen.queryByText("Recent discoveries")).toBeNull();
   expect(screen.queryByText("Meet your first plant.")).toBeNull();
-  fireEvent.press(screen.getByRole("button", { name: "Start with a photo" }));
+  fireEvent.press(screen.getByRole("button", { name: "Scan" }));
   expect(mockPush).toHaveBeenCalledWith("/scan");
   expect(mockWriteHistory).not.toHaveBeenCalled();
 });
@@ -117,7 +118,7 @@ test("a returning user without loaded records gets collection recovery rather th
   );
   expect(screen.queryByText(/draft is retained/)).toBeNull();
   expect(screen.queryByText("Your collection starts here")).toBeNull();
-  fireEvent.press(screen.getByRole("button", { name: "Photograph a plant" }));
+  fireEvent.press(screen.getByRole("button", { name: "Scan" }));
   expect(mockPush).toHaveBeenCalledWith("/scan");
   fireEvent.press(screen.getByRole("button", { name: "Refresh collection" }));
   await waitFor(() => expect(mockPlants).toHaveBeenCalledTimes(2));
@@ -230,9 +231,7 @@ test.each(["empty", "unavailable"])(
         "error",
       ),
     );
-    expect(
-      screen.getByRole("button", { name: "Start with a photo" }),
-    ).toBeOnTheScreen();
+    expect(screen.getByRole("button", { name: "Scan" })).toBeOnTheScreen();
     expect(screen.queryByText("We couldn’t load your plants.")).toBeNull();
   },
 );

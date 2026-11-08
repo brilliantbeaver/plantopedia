@@ -1,0 +1,56 @@
+[
+  {
+    "query": "lavender",
+    "provider": "tavily",
+    "count": 4,
+    "images": 4,
+    "titles": [
+      "Lavandula - Wikipedia",
+      "Plant Evaluation: Lavenders for Northern Gardens | Chicago Botanic Garden"
+    ],
+    "ms": 2360
+  },
+  {
+    "query": "basil",
+    "provider": "tavily",
+    "count": 4,
+    "images": 3,
+    "titles": [
+      "Different Types and Varieties of Basil at a Glance",
+      "Basil - Wikipedia"
+    ],
+    "ms": 3724
+  },
+  {
+    "query": "tomato",
+    "provider": "tavily",
+    "count": 3,
+    "images": 3,
+    "titles": [
+      "Tomato - Wikipedia",
+      "Solanum lycopersicum (Tomato, Tomatoes) | North Carolina Extension Gardener Plant Toolbox"
+    ],
+    "ms": 481
+  },
+  {
+    "query": "rose",
+    "provider": "tavily",
+    "count": 4,
+    "images": 4,
+    "titles": [
+      "Rose - Wikipedia",
+      "Diversity of Roses | New York Botanical Garden"
+    ],
+    "ms": 3223
+  },
+  {
+    "query": "Ocimum basilicum",
+    "provider": "plantnet",
+    "count": 1,
+    "images": 0,
+    "titles": [
+      "Sweet basil"
+    ],
+    "ms": 4414
+  }
+]

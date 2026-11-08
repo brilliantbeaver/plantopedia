@@ -1,3 +1,4 @@
+import { RequireSignIn } from "../../features/auth/RequireSignIn";
 import { useState, useRef, useCallback } from "react";
 import { ScrollView, Text, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -27,6 +28,13 @@ import { useSessionApi } from "../../services/session";
 import { useReducedMotion } from "../../theme/use-reduced-motion";
 import { usePreferences } from "../../theme/preferences";
 export default function Ask() {
+  return (
+    <RequireSignIn returnTo="/ask">
+      <SignedInAsk />
+    </RequireSignIn>
+  );
+}
+function SignedInAsk() {
   const { conversationId } = useLocalSearchParams<{
     conversationId?: string;
   }>();

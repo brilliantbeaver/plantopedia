@@ -1,17 +1,18 @@
 import { useEffect, useState } from "react";
-import {
-  AccessibilityInfo,
-  View,
-  StyleSheet,
-  type ViewProps,
-} from "react-native";
+import { AccessibilityInfo, View, StyleSheet } from "react-native";
+import type { GlassSurfaceProps } from "./GlassSurface";
 import {
   GlassView,
   isLiquidGlassAvailable,
   isGlassEffectAPIAvailable,
 } from "expo-glass-effect";
 import { usePreferences } from "./preferences";
-export function GlassSurface({ children, style, ...props }: ViewProps) {
+export function GlassSurface({
+  children,
+  style,
+  tint,
+  ...props
+}: GlassSurfaceProps) {
   const { colors, mode } = usePreferences();
   const [reduce, setReduce] = useState(true);
   useEffect(() => {
@@ -29,14 +30,25 @@ export function GlassSurface({ children, style, ...props }: ViewProps) {
     };
   }, []);
   const surface = [styles.surface, { borderColor: colors.border }, style];
+  const tinted =
+    tint === "botanical"
+      ? mode === "dark"
+        ? "#164B35"
+        : "#DDF8CE"
+      : colors.surface;
   if (reduce || !isLiquidGlassAvailable() || !isGlassEffectAPIAvailable())
     return (
-      <View {...props} style={[surface, { backgroundColor: colors.surface }]}>
+      <View {...props} style={[surface, { backgroundColor: tinted }]}>
         {children}
       </View>
     );
   return (
-    <GlassView {...props} colorScheme={mode} style={surface}>
+    <GlassView
+      {...props}
+      colorScheme={mode}
+      {...(tint === "botanical" ? { tintColor: tinted } : {})}
+      style={surface}
+    >
       {children}
     </GlassView>
   );

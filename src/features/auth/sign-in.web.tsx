@@ -1,7 +1,10 @@
 import { SignIn as ClerkSignIn } from "@clerk/expo/web";
 import { usePreferences } from "../../theme/preferences";
+import { useLocalSearchParams } from "expo-router";
+import { safeReturnTo } from "./return-to";
 
-export function SignIn() {
+export function SignIn({ returnTo: destination }: { returnTo?: string } = {}) {
+  const { returnTo } = useLocalSearchParams<{ returnTo?: string }>();
   const { colors, mode } = usePreferences();
   const inputBorder = mode === "dark" ? "#718977" : "#7C9181";
   // Keep Clerk mounted when OAuth returns to /login#/sso-callback, including
@@ -11,6 +14,8 @@ export function SignIn() {
     <ClerkSignIn
       routing="hash"
       withSignUp
+      forceRedirectUrl={safeReturnTo(destination ?? returnTo)}
+      signUpForceRedirectUrl={safeReturnTo(destination ?? returnTo)}
       appearance={{
         variables: {
           colorPrimary: colors.primary,

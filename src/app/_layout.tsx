@@ -1,4 +1,4 @@
-import { Image, Platform } from "react-native";
+import { Platform } from "react-native";
 import { Stack } from "expo-router";
 import { ClerkProvider, useAuth } from "@clerk/expo";
 import { tokenCache } from "@clerk/expo/token-cache";
@@ -8,9 +8,10 @@ import { StatusBar } from "expo-status-bar";
 import { publicConfig } from "../config/public-env";
 import { webAuthConfigurationError } from "../config/web-auth";
 import { PreferencesProvider, usePreferences } from "../theme/preferences";
-import { Screen, Copy, Feedback, styles } from "../components/ui";
-import { SessionProvider } from "../services/session";
-import { WelcomeScreen } from "../features/auth/WelcomeScreen";
+import { SessionProvider, GuestSessionProvider } from "../services/session";
+import { ProgressBootstrap } from "../features/rewards/Progress";
+import { DeletionProvider } from "../features/garden/DeletionProvider";
+import { Screen, Feedback } from "../components/ui";
 const query = new QueryClient({
   defaultOptions: {
     queries: { retry: 1, staleTime: 15000 },
@@ -26,11 +27,14 @@ function AuthGate() {
         <Feedback loading />
       </Screen>
     );
-  if (!isSignedIn) return <WelcomeScreen />;
+  if (!isSignedIn) return <GuestExperience />;
   return (
     <SessionProvider key={userId}>
       <StatusBar style={mode === "dark" ? "light" : "dark"} />
-      <Stack screenOptions={{ headerShown: false }} />
+      <DeletionProvider>
+        <ProgressBootstrap />
+        <Stack screenOptions={{ headerShown: false }} />
+      </DeletionProvider>
     </SessionProvider>
   );
 }
@@ -67,21 +71,18 @@ export default function RootLayout() {
               <AuthGate />
             </ClerkProvider>
           ) : (
-            <Screen>
-              <Copy large>Plantopedia</Copy>
-              <Image
-                source={require("../../assets/images/botanical.png")}
-                style={styles.photo}
-                accessible={false}
-              />
-              <Copy>
-                {webAuthError ||
-                  "Set EXPO_PUBLIC_API_BASE_URL and EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY to connect this app."}
-              </Copy>
-            </Screen>
+            <GuestExperience />
           )}
         </QueryClientProvider>
       </PreferencesProvider>
     </SafeAreaProvider>
+  );
+}
+
+function GuestExperience() {
+  return (
+    <GuestSessionProvider>
+      <Stack screenOptions={{ headerShown: false }} />
+    </GuestSessionProvider>
   );
 }

@@ -1,65 +1,108 @@
 import { useState } from "react";
-import { Pressable, Text, View, StyleSheet } from "react-native";
+import { Pressable, Text, View, StyleSheet, PanResponder } from "react-native";
 import { useRouter } from "expo-router";
 import type { Plant } from "@plantopedia/contracts";
 import { usePreferences } from "../theme/preferences";
 import { PrivatePhoto } from "./PrivatePhoto";
 import { AppIcon } from "./AppIcon";
+import { IconButton, Action, Feedback } from "./ui";
+import { useDeletion } from "../features/garden/DeletionProvider";
 export function PlantCard({ plant }: { plant: Plant }) {
   const router = useRouter();
   const { t, colors } = usePreferences();
   const [focused, setFocused] = useState(false);
+  const [error, setError] = useState<unknown>(null);
+  const [menu, setMenu] = useState(false);
+  const deletion = useDeletion();
+  const gesture = PanResponder.create({
+    onMoveShouldSetPanResponder: (_, g) =>
+      Math.abs(g.dx) > 24 && Math.abs(g.dx) > Math.abs(g.dy) * 2,
+    onPanResponderRelease: (_, g) => {
+      if (g.dx < -40) setMenu(true);
+    },
+  });
+  if (deletion?.items.some((x) => x.id === plant.id)) return null;
   return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={`${plant.nickname} · ${plant.scientificName ?? t("uncertain")}`}
-      onPress={() => router.push(`/plants/${plant.id}`)}
-      onFocus={() => setFocused(true)}
-      onBlur={() => setFocused(false)}
-      style={({ pressed }) => [
-        card.surface,
-        {
-          backgroundColor: colors.surface,
-          borderColor: focused ? colors.primary : colors.border,
-          opacity: pressed ? 0.8 : 1,
-        },
-      ]}
-    >
-      <View style={[card.photo, { backgroundColor: colors.muted }]}>
-        <View style={card.placeholder}>
-          <AppIcon name="leaf" size={34} color={colors.primary} />
-        </View>
-        {plant.coverPhotoId ? (
-          <PrivatePhoto
-            plantId={plant.id}
-            photoId={plant.coverPhotoId}
-            style={card.photoImage}
-          />
-        ) : null}
+    <View {...gesture.panHandlers} style={{ gap: 8 }}>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`${plant.nickname} · ${plant.scientificName ?? t("uncertain")}`}
+          onPress={() => router.push(`/plants/${plant.id}`)}
+          accessibilityActions={[{ name: "delete", label: t("remove") }]}
+          onAccessibilityAction={(e) => {
+            if (e.nativeEvent.actionName === "delete") setMenu(true);
+          }}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          style={({ pressed }) => [
+            card.surface,
+            { flex: 1 },
+            {
+              backgroundColor: colors.surface,
+              borderColor: focused ? colors.primary : colors.border,
+              opacity: pressed ? 0.8 : 1,
+            },
+          ]}
+        >
+          <View style={[card.photo, { backgroundColor: colors.muted }]}>
+            <View style={card.placeholder}>
+              <AppIcon name="leaf" size={34} color={colors.primary} />
+            </View>
+            {plant.coverPhotoId ? (
+              <PrivatePhoto
+                plantId={plant.id}
+                photoId={plant.coverPhotoId}
+                style={card.photoImage}
+              />
+            ) : null}
+          </View>
+          <View style={card.details}>
+            <Text style={[card.name, { color: colors.text }]}>
+              {plant.nickname}
+            </Text>
+            <Text style={[card.species, { color: colors.secondary }]}>
+              {plant.scientificName ?? t("uncertain")}
+            </Text>
+            <View style={card.meta}>
+              <AppIcon
+                name={
+                  plant.ownership === "owned"
+                    ? "heart-outline"
+                    : "compass-outline"
+                }
+                size={15}
+                color={colors.secondary}
+              />
+              <Text style={[card.small, { color: colors.secondary }]}>
+                {t(plant.ownership)}
+                {plant.place ? ` · ${plant.place}` : ""}
+              </Text>
+            </View>
+          </View>
+          <AppIcon name="chevron-forward" size={19} color={colors.secondary} />
+        </Pressable>
+        <IconButton
+          icon="ellipsis-horizontal"
+          label={`${t("itemOptions")}: ${plant.nickname}`}
+          onPress={() => setMenu((x) => !x)}
+        />
       </View>
-      <View style={card.details}>
-        <Text style={[card.name, { color: colors.text }]}>
-          {plant.nickname}
-        </Text>
-        <Text style={[card.species, { color: colors.secondary }]}>
-          {plant.scientificName ?? t("uncertain")}
-        </Text>
-        <View style={card.meta}>
-          <AppIcon
-            name={
-              plant.ownership === "owned" ? "heart-outline" : "compass-outline"
-            }
-            size={15}
-            color={colors.secondary}
-          />
-          <Text style={[card.small, { color: colors.secondary }]}>
-            {t(plant.ownership)}
-            {plant.place ? ` · ${plant.place}` : ""}
-          </Text>
-        </View>
-      </View>
-      <AppIcon name="chevron-forward" size={19} color={colors.secondary} />
-    </Pressable>
+      {menu && (
+        <Action
+          destructive
+          title={t("remove")}
+          icon="trash-outline"
+          onPress={() => {
+            if (deletion)
+              void deletion
+                .remove({ id: plant.id, label: plant.nickname, kind: "plant" })
+                .catch(setError);
+          }}
+        />
+      )}
+      <Feedback error={error} />
+    </View>
   );
 }
 const card = StyleSheet.create({

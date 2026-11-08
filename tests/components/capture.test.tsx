@@ -10,6 +10,7 @@ import type { Draft } from "../../src/services/local-schema";
 import { PreferencesProvider } from "../../src/theme/preferences";
 import { CaptureScreen } from "../../src/features/capture/CaptureScreen";
 import { RequestError } from "../../src/services/api";
+jest.mock("../../src/services/feature-storage",()=>({featureStorage:{read:async()=>null}}));
 let mockSequence = 0;
 jest.mock("expo-crypto", () => ({
   randomUUID: () => `capture_${++mockSequence}`,
@@ -28,6 +29,9 @@ jest.mock("../../src/services/session", () => ({
 jest.mock("../../src/services/local", () => ({
   local: {
     drafts: async () => mockDrafts,
+    purge: async () => {
+      mockDrafts = [];
+    },
     retain: async () => "file:///original.jpg",
     save: async (value: Draft) => {
       mockDrafts = [value];
@@ -79,6 +83,10 @@ test("a lost create acknowledgment freezes the submitted capture and replays the
     </PreferencesProvider>,
   );
   fireEvent.press(screen.getByRole("button", { name: "Choose a photo" }));
+  await waitFor(() =>
+    expect(screen.getByRole("button", { name: "Use photo" })).toBeEnabled(),
+  );
+  fireEvent.press(screen.getByRole("button", { name: "Use photo" }));
   const name = await screen.findByPlaceholderText("Name this particular plant");
   await waitFor(() => expect(name.props.editable).toBe(true));
   fireEvent.changeText(name, "Library tree");
@@ -119,6 +127,10 @@ test("a database outage explains service availability while preserving the draft
     </PreferencesProvider>,
   );
   fireEvent.press(screen.getByRole("button", { name: "Choose a photo" }));
+  await waitFor(() =>
+    expect(screen.getByRole("button", { name: "Use photo" })).toBeEnabled(),
+  );
+  fireEvent.press(screen.getByRole("button", { name: "Use photo" }));
   await screen.findByPlaceholderText("Name this particular plant");
   await waitFor(() =>
     expect(
@@ -158,6 +170,10 @@ test("invalid captures remain editable; a typed pre-write 422 permits correction
     </PreferencesProvider>,
   );
   fireEvent.press(screen.getByRole("button", { name: "Choose a photo" }));
+  await waitFor(() =>
+    expect(screen.getByRole("button", { name: "Use photo" })).toBeEnabled(),
+  );
+  fireEvent.press(screen.getByRole("button", { name: "Use photo" }));
   await screen.findByPlaceholderText("Name this particular plant");
   await waitFor(() =>
     expect(
@@ -244,6 +260,10 @@ test("a phone loopback configuration explains the connection failure and preserv
     .mockRejectedValue(new RequestError(0, "phone_api_unreachable", false));
   showCapture();
   fireEvent.press(screen.getByRole("button", { name: "Choose a photo" }));
+  await waitFor(() =>
+    expect(screen.getByRole("button", { name: "Use photo" })).toBeEnabled(),
+  );
+  fireEvent.press(screen.getByRole("button", { name: "Use photo" }));
   const name = await screen.findByPlaceholderText("Name this particular plant");
   await waitFor(() => expect(name.props.editable).toBe(true));
   fireEvent.changeText(name, "Phone plant");
@@ -253,4 +273,22 @@ test("a phone loopback configuration explains the connection failure and preserv
   );
   expect(mockDrafts[0]?.original).toBe("file:///original.jpg");
   expect(screen.getByRole("button", { name: "Retry" })).toBeEnabled();
+});
+
+test("preview retake returns directly to the live camera without saving", async () => {
+  mockDrafts = [];
+  render(
+    <PreferencesProvider>
+      <QueryClientProvider client={new QueryClient()}>
+        <CaptureScreen />
+      </QueryClientProvider>
+    </PreferencesProvider>,
+  );
+  fireEvent.press(screen.getByRole("button", { name: "Choose a photo" }));
+  await waitFor(() =>
+    expect(screen.getByRole("button", { name: "Retake" })).toBeEnabled(),
+  );
+  fireEvent.press(screen.getByRole("button", { name: "Retake" }));
+  await screen.findByRole("button", { name: "Take photograph" });
+  expect(mockDrafts).toEqual([]);
 });

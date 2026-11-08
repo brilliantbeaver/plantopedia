@@ -855,7 +855,7 @@ window.PLANTOPEDIA_LESSONS = [
         "why": "Creates the current owner’s service scope and releases it on lifecycle changes."
       },
       {
-        "path": "src/app/(tabs)/index.tsx",
+        "path": "src/app/(tabs)/explore.tsx",
         "why": "Reads the owner-scoped collection and distinguishes initial, cached, and refresh states."
       },
       {

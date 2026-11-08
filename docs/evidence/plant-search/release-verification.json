@@ -1,0 +1,105 @@
+{
+  "verifiedAt": "2026-11-02T06:04:11.868Z",
+  "productionUrl": "https://plantopedia-nine.vercel.app",
+  "immutableUrl": "https://plantopedia-kv7vmgb2y-brilliantbeaver.vercel.app",
+  "deploymentId": "dpl_D3gjApRqCsJeR2aaPbzYoBk6cG1r",
+  "previousDeploymentId": "dpl_AYKBnmSS62q3Gjsy6UwmdJHZEt6X",
+  "status": "READY",
+  "source": {
+    "kind": "frozen working-tree snapshot",
+    "files": 551,
+    "sha256": "e5d6978be4ada8961058ce5c0cc89f748e9e4d43163b94749f7983fb88622793",
+    "gitCommitCreated": false
+  },
+  "checks": {
+    "componentTests": 175,
+    "backendTests": 237,
+    "unitTests": 97,
+    "scriptTests": 72,
+    "totalTests": 581,
+    "typecheck": "pass",
+    "lint": "pass",
+    "bundleSecretGuard": "pass",
+    "candidateRoutes": 26,
+    "exportedFilesCompared": 184,
+    "publicHtmlAndBundles": "exact match",
+    "health": "ok",
+    "readiness": "ready",
+    "unsignedPrivateRequests": 401,
+    "runtimeErrorsOrFatal": 0
+  },
+  "publicQueries": [
+    {
+      "query": "lavender",
+      "provider": "tavily",
+      "results": 4,
+      "verifiedPhotos": 3,
+      "titles": [
+        "Lavandula - Wikipedia",
+        "Plant Evaluation: Lavenders for Northern Gardens | Chicago Botanic Garden"
+      ],
+      "durationMs": 2798
+    },
+    {
+      "query": "marigold",
+      "provider": "tavily",
+      "results": 4,
+      "verifiedPhotos": 2,
+      "titles": [
+        "Marigold Botanical Name - GeeksforGeeks",
+        "An Ethnobotanical Perspective on Marigolds — Seattle's Favorite Garden Store Since 1924 - Swansons Nursery"
+      ],
+      "durationMs": 3265
+    },
+    {
+      "query": "rose",
+      "provider": "tavily",
+      "results": 4,
+      "verifiedPhotos": 2,
+      "titles": [
+        "Rose - Wikipedia",
+        "Diversity of Roses | New York Botanical Garden"
+      ],
+      "durationMs": 3854
+    },
+    {
+      "query": "basil",
+      "provider": "tavily",
+      "results": 4,
+      "verifiedPhotos": 2,
+      "titles": [
+        "Different Types and Varieties of Basil at a Glance",
+        "Basil - Wikipedia"
+      ],
+      "durationMs": 5798
+    },
+    {
+      "query": "tomato",
+      "provider": "tavily",
+      "results": 3,
+      "verifiedPhotos": 1,
+      "titles": [
+        "Tomato - Wikipedia",
+        "Solanum lycopersicum (Tomato, Tomatoes) | North Carolina Extension Gardener Plant Toolbox"
+      ],
+      "durationMs": 6312
+    }
+  ],
+  "images": {
+    "policy": "only approved plant photographs relevant to the query; no static fallback",
+    "visualCheck": "OpenAI vision",
+    "unverifiedImages": "hidden; text result preserved",
+    "negativeChecks": "building, car and static graphic withheld",
+    "uiRequiresVerifiedMarker": true
+  },
+  "ux": {
+    "signInButtonsPerGuestScreen": 1,
+    "publicSearch": "no session required; no profile/history writes",
+    "signedInSearchHistory": "existing authenticated per-profile Firestore history",
+    "nativeSafari": "visible results, Google/email controls, cancellation preserves search"
+  },
+  "notExercised": [
+    "Real credential submission and completed Google OAuth round trip",
+    "Live authenticated profile writes from a real Clerk account"
+  ]
+}

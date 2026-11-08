@@ -2,7 +2,10 @@ import { local } from "../../src/services/local";
 const mockCopy = jest.fn();
 const mockFiles = new Map<string, Uint8Array>();
 jest.mock("expo-sqlite", () => ({
-  openDatabaseAsync: async () => ({ execAsync: async () => {} }),
+  openDatabaseAsync: async () => ({
+    execAsync: async () => {},
+    getFirstAsync: async () => ({ user_version: 1 }),
+  }),
 }));
 jest.mock("expo-file-system", () => ({
   Paths: { document: "file:///documents" },

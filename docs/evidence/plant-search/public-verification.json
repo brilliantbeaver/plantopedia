@@ -1,0 +1,66 @@
+{
+  "verifiedAt": "2026-11-02T06:02:50.957Z",
+  "url": "https://plantopedia-nine.vercel.app",
+  "htmlAndBundles": "exact match",
+  "bundleCount": 1,
+  "health": "ok",
+  "readiness": "ready",
+  "privateEndpoints": 401,
+  "queries": [
+    {
+      "query": "lavender",
+      "provider": "tavily",
+      "results": 4,
+      "verifiedPhotos": 3,
+      "titles": [
+        "Lavandula - Wikipedia",
+        "Plant Evaluation: Lavenders for Northern Gardens | Chicago Botanic Garden"
+      ],
+      "durationMs": 2798
+    },
+    {
+      "query": "marigold",
+      "provider": "tavily",
+      "results": 4,
+      "verifiedPhotos": 2,
+      "titles": [
+        "Marigold Botanical Name - GeeksforGeeks",
+        "An Ethnobotanical Perspective on Marigolds — Seattle's Favorite Garden Store Since 1924 - Swansons Nursery"
+      ],
+      "durationMs": 3265
+    },
+    {
+      "query": "rose",
+      "provider": "tavily",
+      "results": 4,
+      "verifiedPhotos": 2,
+      "titles": [
+        "Rose - Wikipedia",
+        "Diversity of Roses | New York Botanical Garden"
+      ],
+      "durationMs": 3854
+    },
+    {
+      "query": "basil",
+      "provider": "tavily",
+      "results": 4,
+      "verifiedPhotos": 2,
+      "titles": [
+        "Different Types and Varieties of Basil at a Glance",
+        "Basil - Wikipedia"
+      ],
+      "durationMs": 5798
+    },
+    {
+      "query": "tomato",
+      "provider": "tavily",
+      "results": 3,
+      "verifiedPhotos": 1,
+      "titles": [
+        "Tomato - Wikipedia",
+        "Solanum lycopersicum (Tomato, Tomatoes) | North Carolina Extension Gardener Plant Toolbox"
+      ],
+      "durationMs": 6312
+    }
+  ]
+}

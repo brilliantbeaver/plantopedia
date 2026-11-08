@@ -1,54 +1,54 @@
 {
   "lesson-01.zip": {
     "bytes": 19141,
-    "sha256": "eec5f87b4f5893fc34ae8a7eb4dc723abc9865131aecfb7531580e16e4194b24"
+    "sha256": "6830500fecc956a628c66d659ca627de675ca17c6cc996ce3f6b20aba4f9c4c5"
   },
   "lesson-02.zip": {
     "bytes": 20645,
-    "sha256": "37d3b31fa581795b8fcb2b71e9f9f3f225035ba657a5cf83317bbd25ffc5d1d5"
+    "sha256": "d8a7103675a3a96974a1db452e691654efabf893ea5bd946379447d96d48b9bf"
   },
   "lesson-03.zip": {
     "bytes": 20033,
-    "sha256": "4a0fa817bfdfc9f321e899bfb8da5da3984d8a10a31df16fb5e085c111aa7197"
+    "sha256": "13dbe1288fddec1f7d948560850f13d3f34d52c6ddb665f32a0c23d9baeb932a"
   },
   "lesson-04.zip": {
     "bytes": 19146,
-    "sha256": "1e239fcba71299310d0b2d0e8c286ff1ee169df9dd3ba5d547276da9afeef41b"
+    "sha256": "5ccb14682a65a54a26bd688dfc89a678665a1dcebae480466223d1b61a76a096"
   },
   "lesson-05.zip": {
-    "bytes": 19628,
-    "sha256": "fa4b4b6078cb6d59e0100cd22c68ecc9788d63fdc061ebe99d1db9adc5cb26d4"
+    "bytes": 19629,
+    "sha256": "dc1466eaa1ef4f00eeea0bd64c5fafae38f82b629150b70797c0b0d44ff994f1"
   },
   "lesson-06.zip": {
     "bytes": 19534,
-    "sha256": "5c1cc64bb34453184393a0920e07046c511a221170d90cd3825355875cb31410"
+    "sha256": "4a18755da17374abfe2070edbe437e1c517e37a17b816eb42530c6a75e0cf804"
   },
   "lesson-07.zip": {
     "bytes": 20867,
-    "sha256": "eb85c8063f5afd8b6b63c5af9dae16792a97af9b6aaa99d39342c086e99dfcc3"
+    "sha256": "6263baf0fdd3f7da34121a60c1143d486e53e4ec4b8e6f05f13bf396c212514b"
   },
   "lesson-08.zip": {
     "bytes": 23188,
-    "sha256": "091f6ffecccb33b867528deaced6f50431b66ac319ba9aefd4d78db80894f9ab"
+    "sha256": "ad2ea145c849e0952b1a23e960235b1295b6f6c674e47b493a58aae12227f602"
   },
   "lesson-09.zip": {
     "bytes": 24134,
-    "sha256": "1514cbe32bd4dfd0a237dd8c434d653ea04b2f53d66a7bfcf1a2a2f22ff461fd"
+    "sha256": "9804d46843a83b16a2d9e7ca3c150e4275525ac0b8decb6adb0ecbc88e95d7ce"
   },
   "lesson-10.zip": {
     "bytes": 21971,
-    "sha256": "1b9a45ef6a6a8ce371912fae6d79e6fc259c3b84ed00042d3ea5b85e84da76ea"
+    "sha256": "9c6be8f58b6c82b1429c7beb170032bcd293e986f309586aefd4e7a0b7f49a99"
   },
   "plantopedia-course-kit.zip": {
-    "bytes": 1930023,
-    "sha256": "12ff8a2a63930a18dc6d963e1b567a52b11ed2c97c4223be8c4bd51fe4fdac2d"
+    "bytes": 1934458,
+    "sha256": "e9be69e39d0b0fe4eb2d3511c3f396605731fac55f44ca46ab2122749750630c"
   },
   "plantopedia-exercises.zip": {
     "bytes": 65055,
-    "sha256": "f30bd40693f7361bf65bdef75a20fa7a66b749d730eed8fc5ed002bc25bfbc7b"
+    "sha256": "a8d16f2ba79c088c0ca5c26173aab974da6143be167dbb96c4cc151694f6c72d"
   },
   "plantopedia-notebooks.zip": {
-    "bytes": 121431,
-    "sha256": "ef9c3ccf246eb908e0034e76d6e8f087e331bd8c85ca7d262e46c10323919a74"
+    "bytes": 121432,
+    "sha256": "1b6bfda0354e798fe4afd976045cd65aa682c5e8b74ba56e7c1c50ff380ec77c"
   }
 }

@@ -1,5 +1,6 @@
 import { existsSync, readFileSync } from "node:fs";
-import { spawnSync } from "node:child_process";
+import { spawnSync, execFileSync } from "node:child_process";
+import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parse } from "dotenv";
 
@@ -12,6 +13,13 @@ const system = Object.fromEntries(
   ),
 );
 function run(command, args, env = system) {
+  if (command === "vercel") {
+    const candidate = join(
+      execFileSync("npm", ["prefix", "--global"], { encoding: "utf8" }).trim(),
+      "bin/vercel",
+    );
+    if (existsSync(candidate)) command = candidate;
+  }
   const result = spawnSync(command, args, { cwd: root, env, stdio: "inherit" });
   if (result.error) throw result.error;
   if (result.status !== 0) process.exit(result.status ?? 1);

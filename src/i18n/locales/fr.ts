@@ -1,9 +1,15 @@
+import { plantSearchCopy } from "./plant-search";
+import { guestCopy } from "./guest";
+import { pollinatorCopy } from "./pollinators";
 import { authCopy } from "./auth";
 import { voiceSettingsCopy } from "./voice-settings";
 import { liveVoiceCopy } from "./live-voice";
 import { uxCopy } from "./ux";
 import type { Dictionary } from "./en";
 export const dictionary = {
+  ...pollinatorCopy["fr"],
+  ...plantSearchCopy["fr"],
+  ...guestCopy["fr"],
   ...liveVoiceCopy["fr"],
   ...voiceSettingsCopy["fr"],
   ...authCopy["fr"],

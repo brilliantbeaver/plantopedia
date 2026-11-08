@@ -24,6 +24,7 @@ async function request(path) {
         "--silent",
         "--show-error",
         "--no-location",
+        "--globoff",
         "--max-time",
         "30",
         "--output",
@@ -46,8 +47,9 @@ async function request(path) {
 }
 
 const routes = [
-  ["/", 307],
+  ["/", 200],
   ["/login", 200],
+  ["/explore", 200],
   ["/plants", 200],
   ["/plants/acceptance-fixture", 200],
   ["/scan", 200],
@@ -55,6 +57,17 @@ const routes = [
   ["/settings", 200],
   ["/tasks", 200],
   ["/sso-callback", 200],
+  ["/search", 200],
+  ["/progress", 200],
+  ["/journey", 200],
+  ["/species/ncsu_helianthus_annuus", 200],
+  ["/sightings/acceptance-fixture", 200],
+  ["/tutorials", 308],
+  ["/tutorials/", 200],
+  ["/tutorials/course-reader.html", 200],
+  ["/tutorials/missing-acceptance-file.js", 404],
+  ["/tutorials/.env", 404],
+  ["/tutorials/source/.env.html", 404],
   ["/health", 200],
   ["/ready", 200],
   ["/v1/plants", 401],
@@ -66,12 +79,21 @@ const routes = [
 for (const [path, status] of routes) {
   const result = await request(path);
   assert.equal(result.status, status, `${path}: HTTP status`);
-  if (path === "/") assert.match(result.headers, /location: \/plants\r?$/im);
+  if (path === "/tutorials")
+    assert.match(result.headers, /location: \/tutorials\/\r?$/im);
   if (path === "/health") assert.equal(JSON.parse(result.body).status, "ok");
   if (path === "/ready") assert.equal(JSON.parse(result.body).status, "ready");
+  if (path.startsWith("/tutorials/") && status === 200) {
+    assert.match(
+      result.headers,
+      /content-security-policy:.*object-src 'none'/im,
+    );
+    assert.match(result.headers, /x-content-type-options: nosniff/im);
+  }
   if (
     status === 200 &&
-    !["/health", "/ready", "/__clerk/v1/environment"].includes(path)
+    !["/health", "/ready", "/__clerk/v1/environment"].includes(path) &&
+    !path.startsWith("/tutorials/")
   ) {
     assert.match(result.headers, /content-type: text\/html/im);
     assert.match(result.headers, /cache-control:.*no-cache/im);

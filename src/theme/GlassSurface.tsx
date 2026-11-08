@@ -1,13 +1,22 @@
 import { View, StyleSheet, type ViewProps } from "react-native";
 import { usePreferences } from "./preferences";
-export function GlassSurface({ style, ...props }: ViewProps) {
-  const { colors } = usePreferences();
+export type GlassSurfaceProps = ViewProps & { tint?: "botanical" | undefined };
+export function GlassSurface({ style, tint, ...props }: GlassSurfaceProps) {
+  const { colors, mode } = usePreferences();
   return (
     <View
       {...props}
       style={[
         styles.surface,
-        { backgroundColor: colors.surface, borderColor: colors.border },
+        {
+          backgroundColor:
+            tint === "botanical"
+              ? mode === "dark"
+                ? "#164B35"
+                : "#DDF8CE"
+              : colors.surface,
+          borderColor: colors.border,
+        },
         style,
       ]}
     />

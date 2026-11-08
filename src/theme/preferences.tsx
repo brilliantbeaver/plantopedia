@@ -16,6 +16,11 @@ import { dictionary as ja } from "../i18n/locales/ja";
 import { dictionary as ko } from "../i18n/locales/ko";
 import { preferenceStorage } from "../services/preference-storage";
 export const dictionaries = { en, fr, es, de, "zh-Hans": zh, ja, ko };
+export const designTokens = {
+  spacing: { small: 8, medium: 12, section: 16, large: 24 },
+  radius: { control: 18, photo: 22, card: 24 },
+  motion: { ui: 250, reward: 1000 },
+} as const;
 const light = {
   canvas: "#F4F7F3",
   surface: "#FFFFFF",
@@ -26,6 +31,13 @@ const light = {
   border: "#CAD7CD",
   muted: "#E3EDE0",
   danger: "#A32323",
+  success: "#166534",
+  info: "#245A81",
+  warning: "#815000",
+  pollen: "#815000",
+  basic: "#166534",
+  rare: "#6B2990",
+  mythical: "#815000",
 };
 const dark = {
   canvas: "#101C16",
@@ -37,6 +49,13 @@ const dark = {
   border: "#40574A",
   muted: "#2B4032",
   danger: "#FFB4A9",
+  success: "#A8E6A3",
+  info: "#A8D6FC",
+  warning: "#FFD77C",
+  pollen: "#FFD77C",
+  basic: "#A8E6A3",
+  rare: "#D8B3FA",
+  mythical: "#FFD77C",
 };
 interface Value {
   preferences: Preferences;

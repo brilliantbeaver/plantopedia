@@ -1,0 +1,42 @@
+{
+  "verifiedAt": "2026-11-02T05:16:52.869Z",
+  "productionUrl": "https://plantopedia-nine.vercel.app",
+  "immutableUrl": "https://plantopedia-i5xdk9i9n-brilliantbeaver.vercel.app",
+  "deploymentId": "dpl_AYKBnmSS62q3Gjsy6UwmdJHZEt6X",
+  "previousDeploymentId": "dpl_8ZxEa5gsgdaxh5o5Qk9tDxB52eDx",
+  "status": "READY",
+  "source": {
+    "kind": "frozen working-tree snapshot",
+    "files": 535,
+    "sha256": "906319417c3244c4f59f3ab86ebba044879bce297e82dcb05a3177f6e5bbcf3f",
+    "gitCommitCreated": false
+  },
+  "checks": {
+    "componentTests": 169,
+    "backendTests": 216,
+    "unitTests": 97,
+    "scriptTests": 72,
+    "typecheck": "pass",
+    "lint": "pass",
+    "bundleSecretGuard": "pass",
+    "candidateRoutes": 26,
+    "exportedFilesCompared": 184,
+    "publicHtmlAndBundles": "exact match",
+    "health": "ok",
+    "readiness": "ready",
+    "unsignedPrivateRequests": 401,
+    "runtimeErrorsOrFatal": 0
+  },
+  "ux": {
+    "signInButtonsPerGuestScreen": 1,
+    "guestNoResultsScanSignInRemoved": true,
+    "guestSearchStorage": "none",
+    "profileStorage": "authenticated Firestore",
+    "internalReturnTargets": "validated"
+  },
+  "notExercised": [
+    "Real Google OAuth completion",
+    "Live authenticated profile writes from a real Clerk account",
+    "Physical-device camera and voice acceptance"
+  ]
+}

@@ -1,10 +1,13 @@
+import { RequireSignIn } from "../../features/auth/RequireSignIn";
+import { findSpecies } from "../../features/catalog/catalog";
+import { SpeciesContent } from "../../features/catalog/SpeciesContent";
+import { useDeletion } from "../../features/garden/DeletionProvider";
 import { useState } from "react";
 import { ScrollView, Pressable, Text, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { randomUUID } from "expo-crypto";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { PlantDetail } from "@plantopedia/contracts";
-import { z } from "zod";
 import {
   Screen,
   Copy,
@@ -13,7 +16,6 @@ import {
   Field,
   Feedback,
   Disclosure,
-  ConfirmDialog,
   SectionHeader,
   styles,
 } from "../../components/ui";
@@ -26,6 +28,14 @@ import { useSessionApi } from "../../services/session";
 import { local } from "../../services/local";
 import { usePreferences } from "../../theme/preferences";
 export default function PlantProfile() {
+  const { plantId } = useLocalSearchParams<{ plantId: string }>();
+  return (
+    <RequireSignIn returnTo={`/plants/${plantId}`}>
+      <SignedInPlantProfile />
+    </RequireSignIn>
+  );
+}
+function SignedInPlantProfile() {
   const { plantId: id } = useLocalSearchParams<{ plantId: string }>();
   const { api, owner } = useSessionApi();
   const { t, preferences, colors } = usePreferences();
@@ -34,7 +44,7 @@ export default function PlantProfile() {
   const [note, setNote] = useState("");
   const [noteOpen, setNoteOpen] = useState(false);
   const [showAll, setShowAll] = useState(false);
-  const [deleting, setDeleting] = useState(false);
+  const deletion = useDeletion();
   const [selected, setSelected] = useState<string | null>(null);
   const [noteAttempt, setNoteAttempt] = useState(() => ({
     id: randomUUID(),
@@ -190,6 +200,13 @@ export default function PlantProfile() {
               ))}
             </ScrollView>
           )}
+          <SpeciesContent
+            profile={
+              findSpecies(data.plant.speciesId) ??
+              findSpecies(data.plant.scientificName)
+            }
+            plantId={id}
+          />
           <IdentificationPanel
             key={`${owner}/${id}`}
             data={data}
@@ -274,29 +291,17 @@ export default function PlantProfile() {
               destructive
               icon="trash-outline"
               title={t("remove")}
-              onPress={() => setDeleting(true)}
+              onPress={() => {
+                if (deletion && data)
+                  void deletion
+                    .remove({ id, label: data.plant.nickname, kind: "plant" })
+                    .then(() => router.replace("/plants"))
+                    .catch(() => undefined);
+              }}
             />
           </Disclosure>
         </>
       )}
-      <ConfirmDialog
-        visible={deleting}
-        title={t("remove")}
-        message={t("deleteWarning")}
-        confirmLabel={t("remove")}
-        destructive
-        onCancel={() => setDeleting(false)}
-        onConfirm={async () => {
-          await api.request(
-            `/plants/${id}`,
-            z.object({ deleted: z.boolean() }),
-            { method: "DELETE" },
-          );
-          await local.purge(owner, id);
-          await query.invalidateQueries({ queryKey: [owner] });
-          router.replace("/plants");
-        }}
-      />
     </Screen>
   );
 }

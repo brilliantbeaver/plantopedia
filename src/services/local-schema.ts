@@ -1,6 +1,9 @@
 import { z } from "zod";
-import { Id, Ownership } from "@plantopedia/contracts";
+import { Id, Ownership, AnimalIdentification } from "@plantopedia/contracts";
 export const Draft = z.object({
+  mode: z.enum(["plant", "bug"]).default("plant"),
+  guestIdentificationKey: z.string().optional(),
+  animalResult: AnimalIdentification.optional(),
   id: Id,
   owner: Id,
   observationId: Id,

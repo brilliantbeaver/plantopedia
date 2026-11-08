@@ -90,6 +90,7 @@ let mockSequence = 0;
 const mockRequest = jest.fn();
 const mockIdentify = jest.fn();
 const mockFocus = jest.fn();
+jest.mock("expo-router", () => ({ useRouter: () => ({ push: jest.fn() }) }));
 jest.mock("expo-crypto", () => ({
   randomUUID: () => `attempt_${++mockSequence}`,
 }));

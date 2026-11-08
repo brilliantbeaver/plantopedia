@@ -1,0 +1,29 @@
+{
+  "durationMs": 2914,
+  "images": [
+    {
+      "id": "web_99309c73ee66b269321f724e",
+      "title": "Lavandula - Wikipedia",
+      "shown": true,
+      "verified": true
+    },
+    {
+      "id": "building",
+      "title": "building",
+      "shown": false,
+      "verified": false
+    },
+    {
+      "id": "car",
+      "title": "car",
+      "shown": false,
+      "verified": false
+    },
+    {
+      "id": "logo",
+      "title": "logo",
+      "shown": false,
+      "verified": false
+    }
+  ]
+}

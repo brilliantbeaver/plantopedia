@@ -1,6 +1,8 @@
+import { JourneyHero } from "../../features/journey/Journey";
+import { ProgressSummary, DailyQuest } from "../../features/rewards/Progress";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
-import { Image, View } from "react-native";
+import { View } from "react-native";
 import {
   Screen,
   Copy,
@@ -16,7 +18,12 @@ import { PlantCard } from "../../components/PlantCard";
 import { useCollectionHistory } from "../../services/use-collection-history";
 import { useSessionApi } from "../../services/session";
 import { usePreferences } from "../../theme/preferences";
+import { GuestExplore } from "../../features/explore/GuestExplore";
 export default function Explore() {
+  const { kind } = useSessionApi();
+  return kind === "guest" ? <GuestExplore /> : <SignedInExplore />;
+}
+function SignedInExplore() {
   const { api, owner } = useSessionApi();
   const { t } = usePreferences();
   const router = useRouter();
@@ -30,37 +37,49 @@ export default function Explore() {
   const showStart = knownCollection !== true;
   return (
     <Screen>
-      <PageHeader title="Plantopedia" subtitle={t("tagline")} icon="leaf" />
-      <Card style={{ padding: 0, overflow: "hidden" }}>
-        <Image
-          source={require("../../../assets/images/botanical.png")}
-          style={{ width: "100%", height: 170 }}
-          accessible={false}
-        />
-        <View style={{ padding: 20, gap: 12 }}>
-          <Copy large>
-            {t(
-              isEmpty
-                ? "firstDiscovery"
-                : showStart
-                  ? "startDiscoveryTitle"
-                  : "discover",
-            )}
-          </Copy>
-          <Copy>{t(showStart ? "discoveryIntro" : "recall")}</Copy>
+      <PageHeader
+        title="Plantopedia"
+        subtitle={t("tagline")}
+        icon="leaf"
+        actions={
           <Action
+            secondary
+            compact
+            icon="settings-outline"
+            title={t("settings")}
+            onPress={() => router.push("/settings")}
+          />
+        }
+      />
+      <JourneyHero />
+      <ProgressSummary />
+      <GlassSurface style={{ gap: 12, flexDirection: "row", flexWrap: "wrap" }}>
+        <View style={{ flex: 1, minWidth: 100 }}>
+          <Action
+            title={t("searchPlants")}
+            icon="search"
+            onPress={() => router.push("/search")}
+          />
+        </View>
+        <View style={{ flex: 1, minWidth: 100 }}>
+          <Action
+            title={t("scan")}
             icon="camera"
-            title={t(
-              isEmpty
-                ? "firstPlantAction"
-                : showStart
-                  ? "startDiscoveryAction"
-                  : "capture",
-            )}
             onPress={() => router.push("/scan")}
           />
         </View>
-      </Card>
+      </GlassSurface>
+      <DailyQuest compact />
+      <Copy large>
+        {t(
+          isEmpty
+            ? "firstDiscovery"
+            : showStart
+              ? "startDiscoveryTitle"
+              : "discover",
+        )}
+      </Copy>
+
       <GlassSurface
         style={{
           flexDirection: "row",
@@ -97,6 +116,7 @@ export default function Explore() {
           </Copy>
         </Card>
       )}
+      {!showStart && <Copy muted>{t("recall")}</Copy>}
       {hasPlants && (
         <SectionHeader
           title={t("recent")}

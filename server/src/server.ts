@@ -1,3 +1,9 @@
+import { createKindwise } from "./providers/kindwise.js";
+import { createOpenAIIdentification } from "./providers/openai-identification.js";
+import {
+  withAnimalFallback,
+  withPlantFallback,
+} from "./providers/identification-fallback.js";
 import { randomUUID } from "node:crypto";
 import { createServer } from "node:http";
 import express from "express";
@@ -9,6 +15,7 @@ import { createClerkProxy } from "./http/clerk-proxy.js";
 import { attachVoiceSocket } from "./http/voice-socket.js";
 import { createPlantnet } from "./providers/plantnet.js";
 import { createResearch } from "./providers/research.js";
+import { createPlantSearch } from "./providers/plant-search.js";
 import { createAssistant } from "./providers/openai.js";
 import { createVoice } from "./providers/voice.js";
 import { fakeProviders } from "./providers/fakes.js";
@@ -19,10 +26,14 @@ import { createTracer } from "./telemetry/tracer.js";
 // background worker, process signal handler, or process exit.
 const config = loadConfig();
 const data = createFirebase(config);
+const vision = config.ALLOW_LIVE_PROVIDERS
+  ? createOpenAIIdentification(config)
+  : null;
 const providers = config.ALLOW_LIVE_PROVIDERS
   ? {
-      identification: createPlantnet(config),
+      identification: withPlantFallback(createPlantnet(config), vision!.plant),
       research: createResearch(config),
+      plantSearch: createPlantSearch(config),
       assistant: createAssistant(config),
       voice: createVoice(config),
     }
@@ -30,6 +41,24 @@ const providers = config.ALLOW_LIVE_PROVIDERS
 const dependencies = {
   ...data,
   ...providers,
+  ...(config.ALLOW_LIVE_PROVIDERS &&
+  config.ALLOW_PUBLIC_IDENTIFICATION &&
+  config.IDENTIFICATION_RETENTION_APPROVED &&
+  config.PUBLIC_IDENTIFICATION_DAILY_LIMIT > 0 &&
+  (config.KINDWISE_INSECTID_API_KEY || config.KINDWISE_INSECT_API_KEY)
+    ? {
+        publicIdentification: {
+          dailyLimit: config.PUBLIC_IDENTIFICATION_DAILY_LIMIT,
+          animal: withAnimalFallback(
+            createKindwise(
+              config.KINDWISE_INSECTID_API_KEY ||
+                config.KINDWISE_INSECT_API_KEY,
+            ),
+            vision!.animal,
+          ),
+        },
+      }
+    : {}),
   identity: createIdentity(config),
   tracer: createTracer(config),
   now: () => new Date(),

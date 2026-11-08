@@ -1,7 +1,10 @@
+import { RequireSignIn } from "../../features/auth/RequireSignIn";
+import { useDeletion } from "../../features/garden/DeletionProvider";
+import { GardenSightings } from "../../features/pollinators/GardenSightings";
 import { useState } from "react";
 import { View } from "react-native";
 import { useQuery } from "@tanstack/react-query";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import { z } from "zod";
 import { Plant, Observation } from "@plantopedia/contracts";
 import {
@@ -34,11 +37,22 @@ const Results = z.object({
   limited: z.boolean(),
 });
 export default function Plants() {
+  const { q } = useLocalSearchParams<{ q?: string }>();
+  const initialQuery = typeof q === "string" ? q.slice(0, 120) : "";
+  return (
+    <RequireSignIn returnTo="/plants">
+      <SignedInPlants key={initialQuery} initialQuery={initialQuery} />
+    </RequireSignIn>
+  );
+}
+function SignedInPlants({ initialQuery }: { initialQuery: string }) {
   const { api, owner } = useSessionApi();
   const { t, colors } = usePreferences();
   const router = useRouter();
-  const [text, setText] = useState("");
-  const [query, setQuery] = useState("");
+  const deletion = useDeletion();
+  const [section, setSection] = useState<"plants" | "sightings">("plants");
+  const [text, setText] = useState(initialQuery);
+  const [query, setQuery] = useState(initialQuery.trim());
   const [filter, setFilter] = useState<"all" | "owned" | "observed">("all");
   const records = useQuery({
     queryKey: [owner, "plants", query],
@@ -61,7 +75,9 @@ export default function Plants() {
         : undefined,
   );
   const visible = records.data?.filter(
-    (plant) => filter === "all" || plant.ownership === filter,
+    (plant) =>
+      (filter === "all" || plant.ownership === filter) &&
+      !deletion?.items.some((d) => d.kind === "plant" && d.id === plant.id),
   );
   function clear() {
     setText("");
@@ -71,7 +87,7 @@ export default function Plants() {
   return (
     <Screen>
       <PageHeader
-        title={t("plants")}
+        title={t("myGarden")}
         subtitle={t("collection")}
         actions={
           <IconButton
@@ -81,83 +97,105 @@ export default function Plants() {
           />
         }
       />
-      <GlassSurface style={{ gap: 12 }}>
-        <View style={styles.inline}>
-          <AppIcon name="search" color={colors.secondary} />
-          <View style={{ flex: 1 }}>
-            <Field
-              placeholder={t("search")}
-              value={text}
-              onChangeText={setText}
-              returnKeyType="search"
-              onSubmitEditing={() => setQuery(text.trim())}
+      <View style={styles.row}>
+        <Chip
+          title={t("plants")}
+          selected={section === "plants"}
+          onPress={() => setSection("plants")}
+        />
+        <Chip
+          title={t("spotted")}
+          selected={section === "sightings"}
+          onPress={() => setSection("sightings")}
+        />
+      </View>
+      {section === "sightings" ? (
+        <GardenSightings />
+      ) : (
+        <>
+          <GlassSurface style={{ gap: 12 }}>
+            <View style={styles.inline}>
+              <AppIcon name="search" color={colors.secondary} />
+              <View style={{ flex: 1 }}>
+                <Field
+                  placeholder={t("search")}
+                  value={text}
+                  onChangeText={setText}
+                  returnKeyType="search"
+                  onSubmitEditing={() => setQuery(text.trim())}
+                />
+              </View>
+              {text || query ? (
+                <IconButton
+                  icon="close"
+                  label={t("clearSearch")}
+                  onPress={clear}
+                />
+              ) : null}
+            </View>
+            <Action
+              secondary
+              icon="search"
+              title={t("searchAction")}
+              onPress={() => setQuery(text.trim())}
             />
-          </View>
-          {text || query ? (
-            <IconButton icon="close" label={t("clearSearch")} onPress={clear} />
-          ) : null}
-        </View>
-        <Action
-          secondary
-          icon="search"
-          title={t("searchAction")}
-          onPress={() => setQuery(text.trim())}
-        />
-        <View style={styles.row}>
-          <Chip
-            title={t("allPlants")}
-            selected={filter === "all"}
-            onPress={() => setFilter("all")}
-          />
-          <Chip
-            title={t("owned")}
-            icon="heart-outline"
-            selected={filter === "owned"}
-            onPress={() => setFilter("owned")}
-          />
-          <Chip
-            title={t("observed")}
-            icon="compass-outline"
-            selected={filter === "observed"}
-            onPress={() => setFilter("observed")}
-          />
-        </View>
-      </GlassSurface>
-      <Feedback loading={records.isPending} />
-      {records.isError && (
-        <CollectionLoadError
-          refreshing={records.isFetching}
-          hasSavedPlants={Boolean(records.data?.length)}
-          onRetry={() => void records.refetch()}
-        />
+            <View style={styles.row}>
+              <Chip
+                title={t("allPlants")}
+                selected={filter === "all"}
+                onPress={() => setFilter("all")}
+              />
+              <Chip
+                title={t("owned")}
+                icon="heart-outline"
+                selected={filter === "owned"}
+                onPress={() => setFilter("owned")}
+              />
+              <Chip
+                title={t("observed")}
+                icon="compass-outline"
+                selected={filter === "observed"}
+                onPress={() => setFilter("observed")}
+              />
+            </View>
+          </GlassSurface>
+          <Feedback loading={records.isPending} />
+          {records.isError && (
+            <CollectionLoadError
+              refreshing={records.isFetching}
+              hasSavedPlants={Boolean(records.data?.length)}
+              onRetry={() => void records.refetch()}
+            />
+          )}
+          {records.isSuccess &&
+            visible?.length === 0 &&
+            (query || filter !== "all" ? (
+              <EmptyState
+                icon="search-outline"
+                title={t("searchAction")}
+                description={t("noSearchResults")}
+                action={t("clearSearch")}
+                onPress={clear}
+              />
+            ) : (
+              <EmptyState
+                icon="leaf-outline"
+                title={t("collectionStart")}
+                description={t("collectionStartHelp")}
+                action={t("firstPlantAction")}
+                onPress={() => router.push("/scan")}
+              />
+            ))}
+          {!!visible?.length && (
+            <Copy muted>
+              {visible.length} · {t("plants")}
+            </Copy>
+          )}
+          {visible?.map((plant) => (
+            <PlantCard key={plant.id} plant={plant} />
+          ))}
+        </>
       )}
-      {records.isSuccess &&
-        visible?.length === 0 &&
-        (query || filter !== "all" ? (
-          <EmptyState
-            icon="search-outline"
-            title={t("searchAction")}
-            description={t("noSearchResults")}
-            action={t("clearSearch")}
-            onPress={clear}
-          />
-        ) : (
-          <EmptyState
-            icon="leaf-outline"
-            title={t("collectionStart")}
-            description={t("collectionStartHelp")}
-            action={t("firstPlantAction")}
-            onPress={() => router.push("/scan")}
-          />
-        ))}
-      {!!visible?.length && (
-        <Copy muted>
-          {visible.length} · {t("plants")}
-        </Copy>
-      )}
-      {visible?.map((plant) => (
-        <PlantCard key={plant.id} plant={plant} />
-      ))}
     </Screen>
   );
 }

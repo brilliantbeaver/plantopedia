@@ -1,0 +1,16 @@
+{
+  "verifiedAt": "2026-11-02T02:39:58.809Z",
+  "deploymentId": "dpl_8ZxEa5gsgdaxh5o5Qk9tDxB52eDx",
+  "state": "READY",
+  "origin": "https://plantopedia-nine.vercel.app",
+  "tutorials": "https://plantopedia-nine.vercel.app/tutorials/",
+  "routesVerified": 26,
+  "exportedFilesCompared": 184,
+  "runtimeErrorOrFatalEntries": 0,
+  "appBrowserChecks": 7,
+  "tutorialBrowserGroups": 33,
+  "publicIdentificationEnabled": false,
+  "publicGateReason": "provider-retention approval pending",
+  "nativeBinaryDeployed": false,
+  "runtimeAuditAt": "2026-11-02T02:41:21.202Z"
+}

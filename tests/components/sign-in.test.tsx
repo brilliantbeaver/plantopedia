@@ -29,6 +29,10 @@ const mockOpenSignIn = jest.fn();
 const mockWebSignIn = jest.fn((_props: unknown) => null);
 const mockStartSSOFlow = jest.fn();
 let mockExecutionEnvironment = "bare";
+let mockReturnTo: string | undefined;
+jest.mock("expo-router", () => ({
+  useLocalSearchParams: () => ({ returnTo: mockReturnTo }),
+}));
 jest.mock("expo-constants", () => ({
   __esModule: true,
   default: {
@@ -57,6 +61,7 @@ beforeEach(() => {
   mockSignIn.status = "complete";
   mockSignUp.status = "complete";
   mockExecutionEnvironment = "bare";
+  mockReturnTo = undefined;
   mockStartSSOFlow.mockReset();
 });
 function native() {
@@ -65,7 +70,6 @@ function native() {
       <SignIn />
     </PreferencesProvider>,
   );
-  fireEvent.press(screen.getByText("Sign in or create an account"));
   return screen;
 }
 test("native sign-in calls Clerk directly and activates only a complete session", async () => {
@@ -225,8 +229,8 @@ test.each(["cancel", "dismiss"])(
     await waitFor(() => expect(mockStartSSOFlow).toHaveBeenCalledTimes(1));
     await waitFor(() =>
       expect(
-        screen.getByRole("button", { name: "Sign in or create an account" })
-          .props.accessibilityState.disabled,
+        screen.getByRole("button", { name: "Continue with Google" }).props.accessibilityState
+          .disabled,
       ).toBe(false),
     );
     expect(
@@ -264,5 +268,28 @@ test("Expo Go shows why Google requires a custom build and does not launch OAuth
   expect(mockStartSSOFlow).not.toHaveBeenCalled();
   expect(
     screen.getByText(/Google sign-in needs the Plantopedia development/),
+  ).toBeTruthy();
+});
+
+test("web sign-in and account creation both resume the current search", () => {
+  mockReturnTo = "/search?q=sunflower";
+  render(
+    <PreferencesProvider>
+      <WebSignIn />
+    </PreferencesProvider>,
+  );
+  expect(mockWebSignIn).toHaveBeenCalledWith(
+    expect.objectContaining({
+      forceRedirectUrl: "/search?q=sunflower",
+      signUpForceRedirectUrl: "/search?q=sunflower",
+    }),
+  );
+});
+test("native email and account creation controls are visible without an extra disclosure", () => {
+  const view = native();
+  expect(view.getByLabelText("Email")).toBeTruthy();
+  expect(view.getByRole("button", { name: "Create account" })).toBeTruthy();
+  expect(
+    view.getByRole("button", { name: "Continue with Google" }),
   ).toBeTruthy();
 });

@@ -59,12 +59,16 @@ export function createPlantnet(config: Config): IdentificationProvider {
         )
           return { candidates: [], version: "unknown" };
         throw new AppError(
-          response.status === 429 ? 429 : 502,
-          response.status === 429 ? "provider_quota" : "identification_failed",
+          [402, 429].includes(response.status) ? 429 : 502,
+          [402, 429].includes(response.status)
+            ? "provider_quota"
+            : "identification_failed",
           false,
         );
       }
-      const parsed = Response.safeParse(await response.json());
+      const parsed = Response.safeParse(
+        await response.json().catch(() => null),
+      );
       if (!parsed.success) throw new AppError(502, "provider_contract");
       return {
         candidates: parsed.data.results

@@ -1,3 +1,5 @@
+import { mountPublicIdentification } from "./public-identification.js";
+import { mountPlantSearch } from "./plant-search.js";
 import { randomUUID } from "node:crypto";
 import express, {
   type Request,
@@ -18,6 +20,7 @@ import {
   Id,
   StartVoiceTurn,
   SyncStatus,
+  Search,
 } from "@plantopedia/contracts";
 import type { Dependencies } from "../application/ports.js";
 import type { Auth } from "./identity.js";
@@ -25,6 +28,7 @@ import { plantService } from "../application/plants.js";
 import { companionService } from "../application/companion.js";
 import { memoryService } from "../application/memory.js";
 import { accountService } from "../application/accounts.js";
+import { profileService } from "../application/profile.js";
 import { AppError } from "../application/errors.js";
 import { active } from "../application/core.js";
 import { readinessCheck } from "./readiness.js";
@@ -38,6 +42,7 @@ export function createApp(
   const companion = companionService(deps);
   const memory = memoryService(deps);
   const accounts = accountService(deps);
+  const profile = profileService(deps);
   app.disable("x-powered-by");
   app.use("/v1", (_req, res, next) => {
     res.set("Cache-Control", "private, no-store");
@@ -52,6 +57,8 @@ export function createApp(
     }),
   );
   app.use("/v1/voice/turns", express.json({ limit: "2mb" }));
+  app.use("/v1/identify", express.json({ limit: "2900kb" }));
+  app.use("/v1/me/garden", express.json({ limit: "900kb" }));
   app.use(express.json({ limit: "150kb" }));
   app.get("/health", (_req, res) => {
     res.json({ status: "ok", service: "plantopedia-api" });
@@ -82,6 +89,7 @@ export function createApp(
     });
   });
   const identities = new WeakMap<Request, Auth>();
+  mountPlantSearch(app, deps);
   app.use("/v1", async (req, _res, next) => {
     try {
       const bearer = req.headers.authorization;
@@ -116,15 +124,16 @@ export function createApp(
   };
   const id = (req: Request, name = "id") => Id.parse(req.params[name]);
   const key = (req: Request) => Id.parse(req.header("Idempotency-Key"));
+  mountPublicIdentification(app, deps, auth);
   const json =
-    (work: (req: Request) => Promise<unknown>) =>
+    (work: (req: Request) => Promise<unknown>, deadline = 25000) =>
     async (req: Request, res: Response, next: NextFunction) => {
       try {
         let timer: ReturnType<typeof setTimeout> | undefined;
         const timeout = new Promise<never>((_resolve, reject) => {
           timer = setTimeout(
             () => reject(new AppError(504, "request_timeout", false)),
-            25000,
+            deadline,
           );
           timer.unref();
         });
@@ -145,6 +154,26 @@ export function createApp(
   app.get(
     "/v1/me/preferences",
     json((req) => companion.preferences(auth(req))),
+  );
+  app.get(
+    "/v1/me/garden",
+    json((req) => profile.garden(auth(req))),
+  );
+  app.put(
+    "/v1/me/garden",
+    json((req) => profile.updateGarden(auth(req), req.body)),
+  );
+  app.get(
+    "/v1/me/search-history",
+    json((req) => profile.searchHistory(auth(req))),
+  );
+  app.post(
+    "/v1/me/search-history",
+    json((req) => profile.recordSearch(auth(req), req.body)),
+  );
+  app.delete(
+    "/v1/me/search-history",
+    json((req) => profile.clearSearchHistory(auth(req))),
   );
   app.patch(
     "/v1/me/preferences",
@@ -234,7 +263,10 @@ export function createApp(
   });
   app.post(
     "/v1/plants/:id/identifications",
-    json((req) => plants.identify(auth(req), id(req), key(req), req.body)),
+    json(
+      (req) => plants.identify(auth(req), id(req), key(req), req.body),
+      45000,
+    ),
   );
   app.post(
     "/v1/plants/:id/identification-selection",
@@ -242,7 +274,16 @@ export function createApp(
   );
   app.post(
     "/v1/search",
-    json((req) => companion.retrieve(auth(req), req.body)),
+    json(async (req) => {
+      const input = Search.parse(req.body);
+      const result = await companion.retrieve(auth(req), input);
+      if (input.query.trim())
+        await profile.recordSearch(auth(req), {
+          query: input.query,
+          scope: "garden",
+        });
+      return result;
+    }),
   );
   app.post(
     "/v1/sync/status",
