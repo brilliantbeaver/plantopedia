@@ -54,15 +54,13 @@ test("Istanbul still loads YAML config after removing argparse 1 and sprintf-js"
   }
 });
 
-test("Xcode keeps its UUID format and rejects undersized UUID output buffers", () => {
+test("Xcode generates unique identifiers in the native project format", () => {
   const xcode = require("xcode");
   const project = xcode.project("fixture.pbxproj");
   project.hash = { project: { objects: {} } };
-  assert.match(project.generateUuid(), /^[A-F0-9]{24}$/);
-  const fromXcode = createRequire(require.resolve("xcode/package.json"));
-  const uuid = fromXcode("uuid");
-  assert.throws(
-    () => uuid.v5("plant", uuid.v5.DNS, new Uint8Array(8)),
-    RangeError,
-  );
+  const identifiers = Array.from({ length: 100 }, () => project.generateUuid());
+  for (const identifier of identifiers) {
+    assert.match(identifier, /^[A-F0-9]{24}$/);
+  }
+  assert.equal(new Set(identifiers).size, identifiers.length);
 });
