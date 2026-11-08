@@ -65,7 +65,7 @@ test("runtime patch is repeatable and rejects changed dependency versions or sou
   assert.notEqual(original, patched);
   await writeFile(
     packageFile,
-    JSON.stringify({ name: "@expo/cli", version: "57.0.31" }),
+    JSON.stringify({ name: "@expo/cli", version: "57.0.33" }),
   );
   await writeFile(target, original);
   assert.equal(patchExpoLaunchTarget(packageFile), true);
