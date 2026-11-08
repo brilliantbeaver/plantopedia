@@ -19,9 +19,9 @@ const after =
 
 export function patchExpoLaunchTarget(packageFile = findExpoCliPackage()) {
   const { name, version } = JSON.parse(readFileSync(packageFile, "utf8"));
-  if (name !== "@expo/cli" || version !== "57.0.31")
+  if (name !== "@expo/cli" || version !== "57.0.33")
     throw new Error(
-      "Review the Plantopedia default-runtime patch before changing @expo/cli from 57.0.31; run tests/scripts/expo-launch-target.test.mjs against the replacement.",
+      "Review the Plantopedia default-runtime patch before changing @expo/cli from 57.0.33; run tests/scripts/expo-launch-target.test.mjs against the replacement.",
     );
   const target = join(
     dirname(packageFile),
