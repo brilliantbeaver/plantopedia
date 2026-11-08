@@ -1,4 +1,13 @@
 import { z } from "zod";
+import {
+  IdentificationFallback,
+  PlantIdentificationProvider,
+} from "./identification-provenance.js";
+export * from "./plant-search.js";
+export * from "./identification-provenance.js";
+export * from "./pollinators.js";
+export * from "./catalog.js";
+export * from "./profile.js";
 
 export const Id = z.string().regex(/^[A-Za-z0-9_-]{1,128}$/);
 export const IsoDate = z.iso.datetime({ offset: true });
@@ -60,6 +69,7 @@ export const Candidate = z.object({
   commonNames: z.array(z.string()),
   score: z.number().finite().min(0).max(1),
   taxonId: z.string().nullable(),
+  assessment: z.literal("visual_guess").optional(),
 });
 export type Candidate = z.infer<typeof Candidate>;
 export const Plant = z.object({
@@ -73,6 +83,7 @@ export const Plant = z.object({
   coverPhotoId: Id.nullable(),
   place: z.string().max(200),
   identificationId: Id.nullable(),
+  speciesId: z.string().optional(),
 });
 export type Plant = z.infer<typeof Plant>;
 export const Observation = z.object({
@@ -100,7 +111,8 @@ export const Identification = z.object({
   plantId: Id,
   photoIds: z.array(Id).min(1).max(5),
   candidates: z.array(Candidate).max(5),
-  provider: z.literal("plantnet"),
+  provider: PlantIdentificationProvider,
+  fallback: IdentificationFallback.optional(),
   providerVersion: z.string(),
   status: z.enum(["ready", "no_match"]),
   needsMoreEvidence: z.boolean(),
@@ -212,6 +224,7 @@ export const CreatePlant = z.object({
   ownership: Ownership,
   place: z.string().trim().max(200).default(""),
   capturedAt: IsoDate,
+  speciesId: z.string().optional(),
 });
 export const EditPlant = z
   .object({
@@ -223,7 +236,12 @@ export const EditPlant = z
   })
   .strict();
 export const CreateObservation = z
-  .object({ id: Id, text: z.string().trim().max(8000), capturedAt: IsoDate })
+  .object({
+    id: Id,
+    text: z.string().trim().max(8000),
+    capturedAt: IsoDate,
+    kind: z.enum(["user_observation", "care_event"]).optional(),
+  })
   .strict();
 export const Identify = z
   .object({

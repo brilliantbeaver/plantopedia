@@ -17,12 +17,11 @@ async function checked(result: Promise<Result>) {
 
 // Native email flows use the configured FAPI proxy directly. Hosted Account
 // Portal authentication is unavailable on the selected production instance.
-export function SignIn() {
+export function SignIn(_props: { returnTo?: string } = {}) {
   const { signIn } = useSignIn();
   const { signUp } = useSignUp();
   const { startSSOFlow } = useSSO();
   const { t } = usePreferences();
-  const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<Mode>("signIn");
   const [stage, setStage] = useState<Stage>("details");
   const [email, setEmail] = useState("");
@@ -154,25 +153,6 @@ export function SignIn() {
     )
       setError(t("authGoogleIncomplete"));
   }
-  if (!open)
-    return (
-      <View style={{ gap: 12 }}>
-        <Action
-          title={t("authGoogle")}
-          disabled={isExpoGo}
-          busy={busy}
-          onPress={() => void run(googleSignIn)}
-        />
-        {isExpoGo ? <Copy muted>{t("authGoogleBuild")}</Copy> : null}
-        <Action
-          title={t("signIn")}
-          secondary
-          disabled={busy}
-          onPress={() => setOpen(true)}
-        />
-        {error ? <Copy>{error}</Copy> : null}
-      </View>
-    );
   const label =
     mode === "signUp"
       ? t("authCreate")

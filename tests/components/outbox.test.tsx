@@ -6,6 +6,7 @@ import type { Draft } from "../../src/services/local-schema";
 import type { ApiClient } from "../../src/services/api";
 import { responseError } from "../../src/services/api";
 import { Blob as NodeBlob } from "node:buffer";
+jest.mock("../../src/services/feature-storage",()=>({featureStorage:{read:async()=>mockDeletes}}));
 jest.mock("../../src/config/public-env", () => ({
   publicConfig: {
     success: true,
@@ -17,6 +18,7 @@ jest.mock("../../src/services/local", () => ({
 }));
 jest.mock("expo/fetch", () => ({ fetch: jest.fn() }));
 jest.mock("expo-file-system", () => ({ File: jest.fn() }));
+let mockDeletes:unknown[]=[];
 const draft: Draft = {
   id: "plant_a",
   owner: "user_a",
@@ -42,7 +44,7 @@ function api(): ApiClient {
   } as unknown as ApiClient;
 }
 beforeEach(() => {
-  jest.clearAllMocks();
+  jest.clearAllMocks();mockDeletes=[];
 });
 test("encoder metadata fails closed before any API upload and retains draft", async () => {
   jest.mocked(File).mockImplementation(
@@ -121,4 +123,9 @@ test("an HTML gateway error preserves the HTTP failure instead of throwing a JSO
     code: "request_failed",
     retryable: true,
   });
+});
+
+test("pending deletion suppresses conflicting draft writes before dispatch",async()=>{
+ mockDeletes=[{id:"plant_a",kind:"plant",label:"Plant",deadline:Date.now()+5000,status:"pending"}];const client=api();
+ await expect(syncDraft(client,{...draft,stage:"plant"},"en",()=>true)).rejects.toMatchObject({code:"deletion_pending"});expect(client.observe).not.toHaveBeenCalled();expect(fetch).not.toHaveBeenCalled();
 });

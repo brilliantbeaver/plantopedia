@@ -5,6 +5,8 @@ import type {
   Source,
   VoiceTurn,
   VoiceSettings,
+  IdentificationFallback,
+  Identification,
 } from "@plantopedia/contracts";
 import type { Auth, Identity } from "../http/identity.js";
 import type { Repository, PhotoStorage } from "../storage/repository.js";
@@ -12,7 +14,12 @@ export interface IdentificationProvider {
   identify(
     images: readonly { bytes: Buffer; organ: string }[],
     locale: Locale,
-  ): Promise<{ candidates: Candidate[]; version: string }>;
+  ): Promise<{
+    candidates: Candidate[];
+    version: string;
+    provider?: Identification["provider"];
+    fallback?: IdentificationFallback;
+  }>;
 }
 export interface ResearchProvider {
   search(query: string): Promise<Source[]>;
@@ -76,7 +83,18 @@ export interface Tracer {
   run<T>(kind: string, work: () => Promise<T>): Promise<T>;
   flush(): Promise<void>;
 }
+export interface AnimalIdentificationProvider {
+  identify(
+    bytes: Buffer,
+    operationId: string,
+  ): Promise<import("@plantopedia/contracts").AnimalIdentification>;
+}
 export interface Dependencies {
+  plantSearch?: import("../providers/plant-search.js").PlantSearchProvider;
+  publicIdentification?: {
+    dailyLimit: number;
+    animal: AnimalIdentificationProvider;
+  };
   repository: Repository;
   photos: PhotoStorage;
   identity: Identity;

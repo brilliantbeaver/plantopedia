@@ -1,3 +1,5 @@
+import { deletionQueue } from "../features/garden/deletion";
+import { featureStorage } from "./feature-storage";
 import { readPhotoFile } from "../platform/photo-file";
 import { fetch } from "expo/fetch";
 import {
@@ -19,19 +21,27 @@ export async function syncDraft(
   locale: Locale,
   sameUser: () => boolean,
 ): Promise<Draft> {
+  async function authorized(){
+    const pending=await deletionQueue(initial.owner,featureStorage).list();
+    if(!sameUser())throw new Error("account_changed");
+    if(pending.some(p=>p.kind==="plant"&&p.id===initial.id))throw new RequestError(409,"deletion_pending",false);
+  }
+  await authorized();
+  if (api.saveLocalDraft) {
+    if (!sameUser()) throw new Error("account_changed");
+    return api.saveLocalDraft(initial);
+  }
   const key = `${initial.owner}/${initial.id}`;
   if (running.has(key)) throw new Error("operation_in_progress");
   running.add(key);
   let draft = initial;
   async function save(stage: Draft["stage"]) {
+    await authorized();
     draft = { ...draft, stage, failure: null };
     await local.save(draft);
   }
-  function authorized() {
-    if (!sameUser()) throw new Error("account_changed");
-  }
   try {
-    authorized();
+    await authorized();
     if (draft.failure === "record_deleted")
       throw new RequestError(410, "record_deleted", false);
     if (!draft.submittedAt) {
@@ -64,7 +74,7 @@ export async function syncDraft(
       );
       await save("plant");
     }
-    authorized();
+    await authorized();
     if (draft.stage === "plant") {
       await api.observe(
         draft.id,
@@ -77,7 +87,7 @@ export async function syncDraft(
       );
       await save("observation");
     }
-    authorized();
+    await authorized();
     if (draft.stage === "observation") {
       if (!draft.derivative || !publicConfig.success)
         throw new Error("image_not_prepared");
@@ -89,7 +99,7 @@ export async function syncDraft(
       form.append("observationId", draft.observationId);
       form.append("capturedAt", draft.capturedAt);
       const token = await api.token();
-      authorized();
+      await authorized();
       if (!token) throw new RequestError(401, "unauthorized", false);
       const response = await fetch(
         `${publicConfig.data.apiBaseUrl}/v1/plants/${draft.id}/photos`,

@@ -2,6 +2,20 @@
 
 A camera-first, voice-native plant companion for iOS and Android. Photograph a plant, review identification evidence, save that particular specimen, and return to its photograph and observations in conversation.
 
+The public home page presents Google/email sign-in. Continue exploring opens `/explore` for guest text search, with one visible invitation to sign in. Gardens, photo identification, sightings, care check-ins, quests, Pollen, and Ask/voice require sign-in. Searches and garden activity are saved in Firestore under the verified Clerk profile; guest searches are not saved. See [login workflow and profile history](docs/authentication-and-history.md). [Open the web app](https://plantopedia-nine.vercel.app) or [the ten-lesson tutorials](https://plantopedia-nine.vercel.app/tutorials/). Native binaries use separate Expo/EAS builds.
+
+### Student journey guide
+
+Start with the [illustrated biodiversity adventure](docs/biodiversity-journey-guide.html) or the [text walkthrough](docs/biodiversity-journey-guide.md). The revised Explore screen links to a public Journey with a pollination practice challenge; signed-in students can track exploration, saved plants, and check-ins on three different days. Present the [classroom slide deck](docs/slides/index.html) with light and dark mode controls. See the [design plan and verification notes](docs/gamification-redesign.md).
+
+### Identification failover
+
+Plant photos use **Pl@ntNet**; Bug mode uses **Kindwise insect.id** when public submission is enabled. On provider errors, unavailable credits, quota exhaustion, timeouts or invalid responses, the server makes **one bounded image-interpretation request to OpenAI `gpt-6.1-sol`**. Valid no-match/low-confidence results do not trigger fallback. Keys stay server-side; no silent model substitution or retry loop occurs.
+
+OpenAI suggestions are labeled **unverified best guesses**, retain provider/failure provenance, and earn no species-discovery points. Animal ecological status stays **Not sure**. Both providers can charge after an uncertain primary response. Durable operation keys prevent replay from rebilling; failures preserve the local photo. `store: false` is not a zero-retention guarantee. Public uploads remain disabled pending suitable provider terms; configuring keys alone does not enable them.
+
+Read the full [failover contract, limits, privacy and troubleshooting guide](docs/identification-failover.md), [source/provider setup](docs/sources-and-provider-setup.md), and [deployment verification](docs/deployment-verification.md). `OPENAI_API_KEY` enables fallback in live mode, always with `gpt-6.1-sol`, independently of `OPENAI_BACKEND_MODEL`. The separately stored `KINDWISE_PLANTID_API_KEY` is not currently called; Pl@ntNet remains the plant primary.
+
 **Development implementation, not a certified release.** The core screens, authenticated API, provider adapters, SQLite drafts, and automated tests are present. Native voice, cloud deployment, signing, Firebase IAM/vector indexes, and live-provider behavior require their own acceptance runs. See [implementation evidence and remaining work](notes/implementation-status.md) and the [build specification](notes/12_app_create_instr.md).
 
 ## Contents
@@ -102,7 +116,11 @@ Only `EXPO_PUBLIC_*` values are bundled into the app; never give a private key t
 | `PLANTNET_API_KEY` | Private plant-identification key from [Pl@ntNet API key settings](https://my.plantnet.org/doc/getting-started/introduction). Required only in live-provider mode. |
 | `PLANTNET_PROJECT` | Flora/catalog to search: `all` (default), or another supported Pl@ntNet project ID. App validation allows letters, digits, underscores, and hyphens; this is not your Firebase project. |
 | `TAVILY_API_KEY` | Private botanical web-search key from the [Tavily dashboard](https://docs.tavily.com/documentation/quickstart). Required only in live-provider mode. |
-| `OPENAI_API_KEY` | Private API key for voice, text/photo reasoning, and saved-memory embeddings; required only in live-provider mode. Create an application API key using the [official OpenAI documentation](https://developers.openai.com/api/reference/overview#authentication), and keep it server-side. |
+| `OPENAI_API_KEY` | Private key for voice, text/photo reasoning, embeddings and the fixed `gpt-6.1-sol` identification fallback; required in live-provider mode. Create an application key using the [official OpenAI documentation](https://developers.openai.com/api/reference/overview#authentication); keep it server-side. |
+| `KINDWISE_INSECTID_API_KEY` | Server-only insect.id product key for the gated public Bug relay. Legacy `KINDWISE_INSECT_API_KEY` is accepted. A key alone does not enable uploads. |
+| `KINDWISE_PLANTID_API_KEY` | Separate plant.id key, securely provisioned but not called by the current Pl@ntNet plant primary. |
+| `ALLOW_PUBLIC_IDENTIFICATION` / `IDENTIFICATION_RETENTION_APPROVED` | Both default `false`. Require explicit processing/retention review before enabling guest image submission. See the [provider setup](docs/sources-and-provider-setup.md). |
+| `PUBLIC_IDENTIFICATION_DAILY_LIMIT` | Shared durable guest-operation limit, default `0`, maximum `1000`. An operation may make one primary call and one OpenAI fallback call. |
 | `OPENAI_REALTIME_MODEL` | Voice model; the current app accepts **only** `gpt-realtime-2.1`. Confirm account access; there is no silent model substitution. |
 | `OPENAI_BACKEND_MODEL` | Account-accessible OpenAI model ID for text and image reasoning; app default `gpt-6-luna`. The chosen model must support Responses, image input, and tool calls. |
 | `OPENAI_EMBEDDING_MODEL` | Embedding model ID for searching saved memories; app default `text-embedding-3-small`. Must support the configured vector size. |

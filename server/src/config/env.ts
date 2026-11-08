@@ -25,6 +25,18 @@ const Env = z.object({
     )
     .pipe(z.array(z.string().refine(isWebOrigin)).max(16)),
   ALLOW_LIVE_PROVIDERS: bool(false),
+  ALLOW_PUBLIC_IDENTIFICATION: bool(false),
+  IDENTIFICATION_RETENTION_APPROVED: bool(false),
+  PUBLIC_IDENTIFICATION_DAILY_LIMIT: z.coerce
+    .number()
+    .int()
+    .min(0)
+    .max(1000)
+    .default(0),
+  KINDWISE_INSECTID_API_KEY: optional,
+  KINDWISE_INSECT_API_KEY: optional, // Compatibility with earlier local setup.
+  // Provisioned plant.id key: server-only, distinct from insect.id.
+  KINDWISE_PLANTID_API_KEY: optional,
   USE_FIREBASE_EMULATORS: bool(true),
   FIREBASE_PROJECT_ID: z.string().min(1),
   FIRESTORE_DATABASE_ID: z.string().min(1).default("(default)"),

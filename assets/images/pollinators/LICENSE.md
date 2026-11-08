@@ -1,0 +1,1 @@
+Original Plantopedia illustrations created for this implementation: bee, butterfly, hummingbird, moth, beetle, and sprout. Source SVGs and derived PNGs are included. Licensed under CC0 1.0: https://creativecommons.org/publicdomain/zero/1.0/ . No third-party artwork is incorporated.

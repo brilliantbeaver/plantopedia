@@ -17,6 +17,7 @@ import {
 import { publicConfig } from "../config/public-env";
 import { phoneApiUnreachable } from "../platform/api-endpoint";
 import { throwIfAborted } from "../platform/abort";
+import type { Draft } from "./local-schema";
 export class RequestError extends Error {
   constructor(
     public readonly status: number,
@@ -100,6 +101,7 @@ export function apiClient(getToken: () => Promise<string | null>) {
     return schema.parse(json);
   }
   return {
+    saveLocalDraft: undefined as undefined | ((draft: Draft) => Promise<Draft>),
     activate() {
       if (lifecycle.signal.aborted) lifecycle = new AbortController();
     },
@@ -139,6 +141,7 @@ export function apiClient(getToken: () => Promise<string | null>) {
         method: "POST",
         body,
         key,
+        signal: AbortSignal.timeout(50000),
       }),
     startConversation: (body: unknown, key: string) =>
       request("/conversations", Conversation, { method: "POST", body, key }),

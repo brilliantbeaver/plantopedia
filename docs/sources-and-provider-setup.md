@@ -1,0 +1,73 @@
+# Pollinator data and provider setup
+
+Initial feature discovery was verified 2026-11-01; deployment checks later that day supersede the initial access assumptions below. Both Kindwise product keys are now configured privately on the server, and nonbillable usage endpoints returned HTTP 200 with available credits. No Kindwise identification image was submitted. A real OpenAI `gpt-6.1-sol` image fallback check passed using a licensed bundled photo and an injected primary quota failure. See [failover behavior and privacy](identification-failover.md) and [deployment evidence](deployment-verification.md). Read-only marketplace discovery failed because account verification was unavailable; no substitute integration was provisioned.
+
+## Source matrix
+
+| Capability                                   | Source and contract                                                                                                                                                                                                          | Actual access / coverage                                                                                                                                                           | Rights, privacy, limits, fallback                                                                                                                                                                                                                                                                                                                                                                                |
+| -------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Plant photo ID                               | Existing [Pl@ntNet OpenAPI](https://my.plantnet.org/doc/openapi), `server/src/providers/plantnet.ts`; candidate name, score, nullable GBIF ID                                                                                | Existing server adapter preserved; credentials and live success were not checked. Up to three candidates. No structured traits in the current mapping.                             | Server-only secret; existing deadline/live-provider flag. [Terms](https://my.plantnet.org/terms_of_use) describe transient photo processing and retained query history. Public relay stays disabled pending enablement. No provider images are bundled. [Image terms](https://my.plantnet.org/doc/references/using-images) require individual license/author/platform attribution if such images are used later. |
+| Names, traits, lifespan, care, plant ecology | Five [NC State Extension Plant Toolbox](https://plants.ces.ncsu.edu/) entries below, factual paraphrases in `packages/contracts/src/catalog.ts`                                                                              | Bundled and usable without network/account. Deliberately limited coverage; scientific IDs use the `ncsu_` source namespace.                                                        | No copied descriptions or whole database. Each entry retains source/date; unknown fertilizer/biology remains absent. Five approved photos have separate CC licenses. Updates require reviewing sources and shipping a dataset revision.                                                                                                                                                                          |
+| Reference photos                             | `assets/images/species/attribution.json`, individually credited photos from the five source pages                                                                                                                            | Five local JPEGs, resized; fallback local botanical illustration                                                                                                                   | Creator, original URL, source, license URL, retrieval date, and modification recorded. CC BY 2.0 / 4.0 only; NC/ND rejected. Profile Sources links credit and license. No private/user image in a shared cache.                                                                                                                                                                                                  |
+| Insect image classification                  | [Official insect.id documentation](https://documenter.getpostman.com/view/3802128/2s93sZ5YeU), linked from [Kindwise insect.id](https://www.kindwise.com/insect-id); `POST /api/v1/identification?details=common_names,rank` | Real HTTP adapter and official response-shape fixtures; **live access blocked**. Supports terrestrial invertebrates, not a promise of birds/bats. No synthetic production success. | HTTPS/server key; 18-second deadline, validated response. No similar images requested or redistributed. Provider score is not calibrated correctness. [FAQ](https://www.kindwise.com/faq) describes retained results/photos, not zero retention; training/private-photo terms must be settled before enablement.                                                                                                 |
+| Animal ecological role                       | [Oregon State Extension sunflower guide](https://extension.oregonstate.edu/catalog/em-9866-grow-your-own-sunflowers)                                                                                                         | One curated relationship: supported honey bee identification → sunflower visits. Other animals currently retain an unknown ecological verdict.                                     | Short factual paraphrase with source URL; classification alone never establishes ecological role. Negative UI is implemented/tested but no unsupported negative fact is shipped. Expand the curated relationship dataset before claiming broad ecology coverage.                                                                                                                                                 |
+| Local commonness                             | No suitable dataset selected                                                                                                                                                                                                 | Always explicitly unavailable, even when a broad region is chosen                                                                                                                  | No observation-count-as-abundance shortcut. Region is optional/manual/local; NC USA and Other are contexts, not a complete region selector or inferred location.                                                                                                                                                                                                                                                 |
+| UI behavior                                  | [Expo SDK 57 GlassEffect](https://docs.expo.dev/versions/v57.0.0/sdk/glass-effect/) and installed package                                                                                                                    | Existing platform wrappers reused                                                                                                                                                  | Capability checks/Reduce Transparency preserved. No opacity animation on a new glass surface/ancestor. Android and unsupported platforms use existing opaque surfaces.                                                                                                                                                                                                                                           |
+| Pollinator/avatar art                        | Original SVG/PNG illustrations under `assets/images/pollinators/`                                                                                                                                                            | Bee, butterfly, hummingbird, moth, beetle, sprout and four avatar color variants                                                                                                   | Original assets dedicated under the accompanying CC0 license. No third-party character artwork.                                                                                                                                                                                                                                                                                                                  |
+
+The five plant sources are [sunflower](https://plants.ces.ncsu.edu/plants/helianthus-annuus/), [purple coneflower](https://plants.ces.ncsu.edu/plants/echinacea-purpurea/), [common milkweed](https://plants.ces.ncsu.edu/plants/asclepias-syriaca/), [Chinese wisteria](https://plants.ces.ncsu.edu/plants/wisteria-sinensis/), and [ginkgo](https://plants.ces.ncsu.edu/plants/ginkgo-biloba/). These are comparison examples, not a universal planting recommendation. Wisteria carries a North Carolina invasive warning; NC planting claims do not receive planting rewards. Milkweed's adult visits and monarch host relationship are distinguished in the caution. No region defaults from device timezone.
+
+Bundled catalog content is immutable for this release rather than a remote cache with indefinite freshness. Recent searches are bounded to ten, local, and clearable. No public catalog query endpoint was necessary. Future remote expansion must add source-version/locale/region keys and finite freshness instead of storing personal queries in shared caches.
+
+## Public relay and privacy boundary
+
+`POST /public/identify/plant` and `/public/identify/bug` accept only a stable operation ID, cleaned base64 image, and locale. They never accept a guest bearer identity or write an owned plant. Private `/v1` authentication is unchanged; failed private authorization cannot become public access.
+
+The relay enforces a 2 MB decoded input bound, 20 MP decode ceiling, metadata-free JPEG re-encoding, request validation, per-IP rate limit, per-instance concurrency limit, provider deadline, and a Firestore transaction for the shared daily request budget. Resetting a device ID does not reset that budget. One operation key cannot be reused with different image bytes/mode. A lost provider response freezes an uncertain outcome instead of retrying another billable call automatically.
+
+Images are not written to app Storage, Firestore, application traces, or analytics by this relay. Hosting infrastructure still processes request bytes/IPs, and the selected provider processes the submitted photo. Do not advertise zero personal-data processing or zero provider retention. The upload disclosure permits keeping the image locally instead. The API receives no GPS, EXIF coordinates, name, birthday, contact information, or animal observation time.
+
+Firestore receipts contain the image digest, operation digest, status and minimal normalized response; completed response retrieval expires after seven days. **No automatic Firestore TTL deletion has been configured.** Receipts continue preventing an expired operation from rebilling. Review host log policy and choose/document a real receipt retention/cleanup policy before production enablement. Never shorten deduplication retention while claiming retries cannot rebill.
+
+## Kindwise enablement — server configuration only
+
+The following are names, not credentials:
+
+```text
+ALLOW_LIVE_PROVIDERS=true
+ALLOW_PUBLIC_IDENTIFICATION=true
+IDENTIFICATION_RETENTION_APPROVED=true
+PUBLIC_IDENTIFICATION_DAILY_LIMIT=<approved integer, 1..1000>
+KINDWISE_INSECTID_API_KEY=<configured privately on the server>
+```
+
+Defaults are off/zero/empty. The existing server Pl@ntNet configuration remains necessary for the plant relay. Current public enablement is one combined gate for both modes; private signed-in plant ID remains governed by the existing provider path.
+
+Before enabling, privately configure the insect.id product key, confirm suitable image retention/training terms with the provider, review host logs/receipt retention, and set a real provider-account usage **limit** in addition to the app budget. Kindwise's [admin guide](https://www.kindwise.com/faqs-admin-panel) distinguishes hard usage limits from notification-only alerts. No plan was purchased and no credentials were requested in chat. Account-specific price/credits remain to be confirmed; the app budget counts attempts conservatively, including uncertain outcomes.
+
+Verify one consented/controlled image against the real configured path, malformed/timeout/quota behavior, uncertain taxa, and provider response rank/score fields. Record actual response evidence without images, keys, tokens, or account identifiers. Test fixtures prove mapping and failure behavior; they do not prove biological accuracy or live access.
+
+## Contract sample and confidence policy
+
+The official collection's completed-response shape includes:
+
+```json
+{
+  "status": "COMPLETED",
+  "result": {
+    "is_insect": { "binary": true, "probability": 0.98 },
+    "classification": {
+      "suggestions": [
+        {
+          "id": "provider-taxon-id",
+          "name": "Scientific species name",
+          "probability": 0.91,
+          "details": { "rank": "species", "common_names": ["Common name"] }
+        }
+      ]
+    }
+  }
+}
+```
+
+Numbers/names here illustrate the schema, not an executed identification. The adapter requires subject score ≥0.8, species rank, top score ≥0.8, and ≥0.2 margin for a resolved identity. Unsupported/non-subject/genus guesses remain uncertain. Plausible bee/wasp candidates retain a cautious sting warning. Known identity without ecological evidence stays Not sure. These conservative thresholds are display policy and require live validation, not a claimed accuracy calibration.

@@ -1,0 +1,21 @@
+{
+  "verifiedAt": "2026-11-02T06:26:18.203Z",
+  "productionUrl": "https://plantopedia-nine.vercel.app",
+  "routes": [
+    "/",
+    "/explore",
+    "/login",
+    "/search"
+  ],
+  "htmlAndBundles": "exact match",
+  "bundleCount": 1,
+  "health": "ok",
+  "readiness": "ready",
+  "unsignedPrivateRequests": 401,
+  "publicSearch": {
+    "query": "lavender",
+    "provider": "tavily",
+    "results": 4,
+    "verifiedPhotos": 4
+  }
+}

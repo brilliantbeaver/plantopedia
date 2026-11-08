@@ -14,7 +14,17 @@ import { usePreferences } from "../theme/preferences";
 import { loadPrivatePhoto } from "../platform/private-photo";
 import type { ApiClient } from "../services/api";
 import { AppIcon } from "./AppIcon";
-export function PrivatePhoto({
+export function PrivatePhoto(props: Parameters<typeof CloudPhoto>[0]) {
+  const { kind } = useSessionApi();
+  return kind === "guest" ? (
+    <View style={props.style}>
+      <AppIcon name="lock-closed-outline" />
+    </View>
+  ) : (
+    <CloudPhoto {...props} />
+  );
+}
+function CloudPhoto({
   plantId,
   photoId,
   style,

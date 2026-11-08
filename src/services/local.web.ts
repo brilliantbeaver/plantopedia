@@ -1,5 +1,5 @@
 import type { PlantDetail } from "@plantopedia/contracts";
-import type { Draft } from "./local-schema";
+import { Draft } from "./local-schema";
 export { Draft } from "./local-schema";
 // Web is UI preview only. Native SQLite/files provide the durable device implementation.
 const drafts = new Map<string, Draft>();
@@ -11,11 +11,12 @@ export const local = {
     for (const key of cache.keys())
       if (key.startsWith(`${owner}/`)) cache.delete(key);
   },
+  async removeOriginal(_owner: string, _id: string) {},
   async retain(_owner: string, _id: string, uri: string) {
     return uri;
   },
   async save(draft: Draft) {
-    drafts.set(`${draft.owner}/${draft.id}`, draft);
+    drafts.set(`${draft.owner}/${draft.id}`, Draft.parse(draft));
   },
   async drafts(owner: string) {
     return [...drafts.values()].filter((item) => item.owner === owner);
@@ -35,7 +36,10 @@ export const local = {
           .concat(
             [...drafts.values()]
               .filter(
-                (draft) => draft.owner === owner && draft.stage !== "draft",
+                (draft) =>
+                  draft.owner === owner &&
+                  draft.stage !== "draft" &&
+                  draft.mode !== "bug",
               )
               .map((draft) => draft.id),
           ),

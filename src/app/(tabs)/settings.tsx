@@ -1,3 +1,4 @@
+import { SignInPrompt } from "../../features/auth/SignInPrompt";
 import { useEffect, useRef, useState } from "react";
 import { Switch, Text, View } from "react-native";
 import { useClerk } from "@clerk/expo";
@@ -33,6 +34,41 @@ const locales: Record<Locale, string> = {
   ko: "한국어",
 };
 export default function Settings() {
+  const { kind } = useSessionApi();
+  return kind === "guest" ? <GuestSettings /> : <CloudSettings />;
+}
+function GuestSettings() {
+  const { preferences, setPreferences, t } = usePreferences();
+  return (
+    <Screen>
+      <PageHeader title={t("settings")} back />
+      <SignInPrompt compact />
+      <SectionHeader title={t("appearance")} />
+      <View style={styles.row}>
+        {(["light", "dark", "system"] as const).map((theme) => (
+          <Chip
+            key={theme}
+            title={t(theme)}
+            selected={preferences.theme === theme}
+            onPress={() => setPreferences({ ...preferences, theme })}
+          />
+        ))}
+      </View>
+      <SectionHeader title={t("language")} />
+      <View style={styles.row}>
+        {Locale.options.map((locale) => (
+          <Chip
+            key={locale}
+            title={locales[locale]}
+            selected={preferences.locale === locale}
+            onPress={() => setPreferences({ ...preferences, locale })}
+          />
+        ))}
+      </View>
+    </Screen>
+  );
+}
+function CloudSettings() {
   const { preferences, setPreferences, t, colors } = usePreferences();
   const { api, owner, release } = useSessionApi();
   const { signOut } = useClerk();

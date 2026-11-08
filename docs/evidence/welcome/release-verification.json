@@ -1,0 +1,54 @@
+{
+  "verifiedAt": "2026-11-02T06:27:03.903Z",
+  "productionUrl": "https://plantopedia-nine.vercel.app",
+  "immutableUrl": "https://plantopedia-3dneyik8j-brilliantbeaver.vercel.app",
+  "deploymentId": "dpl_5KkPHZcWuAFZYZH784pRSZ2X8ZTs",
+  "previousDeploymentId": "dpl_D3gjApRqCsJeR2aaPbzYoBk6cG1r",
+  "status": "READY",
+  "source": {
+    "kind": "frozen working-tree snapshot",
+    "files": 557,
+    "sha256": "d60ac5d8471fc28fcc6fb6aeecef8e4c90a2354db47e655a026f8732da6b4579",
+    "gitCommitCreated": false
+  },
+  "checks": {
+    "componentTests": 179,
+    "unitTests": 97,
+    "scriptTests": 72,
+    "typecheck": "pass",
+    "lint": "pass",
+    "bundleSecretGuard": "pass",
+    "tutorialArtifacts": "pass",
+    "candidateRoutes": 27,
+    "exportedFilesCompared": 184,
+    "publicHtmlAndBundles": "exact match",
+    "health": "ok",
+    "readiness": "ready",
+    "unsignedPrivateRequests": 401,
+    "runtimeErrorsOrFatal": 0
+  },
+  "navigation": {
+    "loggedOutRoot": "welcome and authentication",
+    "continueExploring": "/explore",
+    "guestExplorerSignInButtons": 1,
+    "signedInRoot": "/explore",
+    "searchAndSpeciesReturnTargets": "preserved"
+  },
+  "browser": {
+    "localSafari": [
+      "root welcome, Google/email controls",
+      "Continue exploring opens /explore",
+      "one Sign in control",
+      "cancellation returns to /explore",
+      "search preserved after cancelling login"
+    ],
+    "publicSafari": [
+      "welcome and Google/email form visibly render at /",
+      "Continue exploring opens /explore",
+      "one visible Sign in control and guest search"
+    ]
+  },
+  "notExercised": [
+    "Real credential submission and completed OAuth authentication"
+  ]
+}

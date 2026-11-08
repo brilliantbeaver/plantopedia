@@ -1,3 +1,6 @@
+import { RequireSignIn } from "../auth/RequireSignIn";
+import { BugDraft } from "../pollinators/BugDraft";
+import { GlassSurface } from "../../theme/GlassSurface";
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Image, Platform, View } from "react-native";
 import { ZodError } from "zod";
@@ -28,6 +31,13 @@ import { syncDraft } from "../../services/outbox";
 import { prepareImage } from "./prepare";
 import { resumeDraftPhoto } from "./resume";
 export function CaptureScreen() {
+  return (
+    <RequireSignIn returnTo="/scan">
+      <SignedInCaptureScreen />
+    </RequireSignIn>
+  );
+}
+function SignedInCaptureScreen() {
   const { t, preferences } = usePreferences();
   const { api, owner } = useSessionApi();
   const router = useRouter();
@@ -39,6 +49,8 @@ export function CaptureScreen() {
   const [cameraReady, setCameraReady] = useState(false);
   const capturing = useRef(false);
   const saving = useRef(false);
+  const [mode, setMode] = useState<"plant" | "bug">("plant");
+  const [preview, setPreview] = useState(false);
   const [draft, setDraft] = useState<Draft | null>(null);
   const [drafts, setDrafts] = useState<Draft[]>([]);
   const [busy, setBusy] = useState(false);
@@ -72,6 +84,7 @@ export function CaptureScreen() {
       const id = randomUUID();
       const original = await local.retain(owner, id, uri);
       let next: Draft = {
+        mode,
         id,
         owner,
         observationId: randomUUID(),
@@ -91,6 +104,7 @@ export function CaptureScreen() {
       await local.save(next);
       if (mounted.current) {
         setDraft(next);
+        setPreview(true);
         setDrafts((items) => [
           ...items.filter((item) => item.id !== next.id),
           next,
@@ -194,10 +208,36 @@ export function CaptureScreen() {
   return (
     <Screen>
       <PageHeader
-        title={t(draft ? "detailsStep" : "capture")}
+        title={t(
+          draft
+            ? draft.mode === "bug"
+              ? "identifyAnimal"
+              : "detailsStep"
+            : mode === "bug"
+              ? "captureBug"
+              : "capture",
+        )}
         subtitle={!draft && !cameraOpen ? t("scanIntro") : undefined}
       />
-      <CaptureSteps step={draft ? 1 : 0} />
+      {!draft && !cameraOpen && (
+        <GlassSurface>
+          <View style={styles.row}>
+            {(["plant", "bug"] as const).map((item) => (
+              <Chip
+                key={item}
+                title={t(item === "plant" ? "plantMode" : "bugMode")}
+                icon={item === "plant" ? "leaf-outline" : "bug-outline"}
+                selected={mode === item}
+                onPress={() => setMode(item)}
+              />
+            ))}
+          </View>
+          {mode === "bug" && <Copy muted>{t("bugTip")}</Copy>}
+        </GlassSurface>
+      )}
+      {(draft?.mode ?? mode) === "plant" && (
+        <CaptureSteps step={draft ? 1 : 0} />
+      )}
       {draft && Platform.OS === "web" && (
         <Copy muted>{t("browserDraftNotice")}</Copy>
       )}
@@ -228,6 +268,62 @@ export function CaptureScreen() {
             onPress={() => setCameraOpen(false)}
           />
         </>
+      ) : draft && preview ? (
+        <Card>
+          <Image
+            accessibilityLabel={t("photo")}
+            source={{ uri: draft.original }}
+            resizeMode="contain"
+            style={styles.photo}
+          />
+          <Action
+            title={t("retake")}
+            icon="camera-outline"
+            disabled={busy}
+            onPress={() => {
+              if (draft.submittedAt || draft.stage !== "draft") return;
+              void local
+                .purge(owner, draft.id)
+                .then(async () => {
+                  setDraft(null);
+                  setPreview(false);
+                  setDrafts((items) => items.filter((x) => x.id !== draft.id));
+                  if (permission?.granted) openCamera();
+                  else if ((await requestPermission()).granted) openCamera();
+                })
+                .catch(setError);
+            }}
+          />
+          <Action
+            title={t("usePhoto")}
+            icon="checkmark"
+            disabled={busy || !draft.derivative}
+            onPress={() => setPreview(false)}
+          />
+        </Card>
+      ) : draft?.mode === "bug" ? (
+        <BugDraft
+          draft={draft}
+          onChange={setDraft}
+          onClose={() => {
+            setDraft(null);
+            void local
+              .drafts(owner)
+              .then((items) =>
+                setDrafts(items.filter((x) => x.stage !== "complete")),
+              )
+              .catch(setError);
+          }}
+          onRetake={() => {
+            void (async () => {
+              if (!draft.submittedAt) await local.purge(owner, draft.id);
+              setDraft(null);
+              setPreview(false);
+              if (permission?.granted) openCamera();
+              else if ((await requestPermission()).granted) openCamera();
+            })().catch(setError);
+          }}
+        />
       ) : draft ? (
         <Card>
           <Image
@@ -322,11 +418,11 @@ export function CaptureScreen() {
         <>
           <Card style={{ alignItems: "center", paddingVertical: 30 }}>
             <IconBadge name="scan" size={92} />
-            <Copy muted>{t("scanTip")}</Copy>
+            <Copy muted>{t(mode === "bug" ? "bugPhotoTip" : "scanTip")}</Copy>
           </Card>
           <Action
             icon="camera"
-            title={t("capture")}
+            title={t(mode === "bug" ? "captureBug" : "capture")}
             onPress={() => {
               setErrorStep("photo");
               if (permission?.granted) openCamera();
@@ -348,7 +444,9 @@ export function CaptureScreen() {
             }}
           />
           {permission && !permission.granted && (
-            <Copy muted>{t("permission")}</Copy>
+            <Copy muted>
+              {t(mode === "bug" ? "bugPermission" : "permission")}
+            </Copy>
           )}
           {drafts.length > 0 && <Copy large>{t("localDrafts")}</Copy>}
           {drafts.map((item) => (
@@ -357,7 +455,11 @@ export function CaptureScreen() {
               key={item.id}
               icon="bookmark-outline"
               title={item.nickname || t("draft")}
-              onPress={() => setDraft(item)}
+              onPress={() => {
+                setDraft(item);
+                setPreview(false);
+                setMode(item.mode ?? "plant");
+              }}
             />
           ))}
         </>

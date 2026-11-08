@@ -1,6 +1,12 @@
 import { render } from "@testing-library/react-native";
 import { Platform } from "react-native";
 import RootLayout from "../../src/app/_layout";
+jest.mock("../../src/features/rewards/Progress", () => ({
+  ProgressBootstrap: () => null,
+}));
+jest.mock("../../src/features/garden/DeletionProvider", () => ({
+  DeletionProvider: ({ children }: { children: React.ReactNode }) => children,
+}));
 
 let mockAuth = {
   isLoaded: false,
@@ -30,6 +36,8 @@ jest.mock("../../src/config/public-env", () => ({
   },
 }));
 jest.mock("../../src/services/session", () => ({
+  GuestSessionProvider: ({ children }: { children: React.ReactNode }) =>
+    children,
   SessionProvider: ({ children }: { children: React.ReactNode }) => children,
 }));
 jest.mock("../../src/services/preference-storage", () => ({
@@ -58,32 +66,20 @@ afterEach(() => {
   else Reflect.deleteProperty(window, "location");
 });
 
-test("route screens, including the login redirect, mount only after session activation", () => {
+test("auth loading stays neutral before guest browsing and authenticated routing activate", () => {
   const screen = render(<RootLayout />);
+  expect(mockStack).not.toHaveBeenCalled();
+  expect(mockSignIn).not.toHaveBeenCalled();
+  mockAuth = { isLoaded: true, isSignedIn: false, userId: null };
+  screen.rerender(<RootLayout />);
+  expect(mockStack).toHaveBeenCalled();
+  mockAuth = { isLoaded: true, isSignedIn: true, userId: "user_fixture" };
+  screen.rerender(<RootLayout />);
   expect(mockProvider).toHaveBeenLastCalledWith(
     expect.objectContaining({
       signInUrl: "/login",
-      signUpUrl: "/login",
       signInFallbackRedirectUrl: "/plants",
-      signUpFallbackRedirectUrl: "/plants",
     }),
   );
-  expect(mockStack).not.toHaveBeenCalled();
-  expect(mockSignIn).not.toHaveBeenCalled();
-
-  mockAuth = { isLoaded: true, isSignedIn: false, userId: null };
-  screen.rerender(<RootLayout />);
-  expect(mockSignIn).toHaveBeenCalled();
-  expect(mockStack).not.toHaveBeenCalled();
-
-  mockAuth = { isLoaded: true, isSignedIn: true, userId: "user_fixture" };
-  screen.rerender(<RootLayout />);
   expect(mockStack).toHaveBeenCalled();
-
-  mockStack.mockClear();
-  mockSignIn.mockClear();
-  mockAuth = { isLoaded: true, isSignedIn: false, userId: null };
-  screen.rerender(<RootLayout />);
-  expect(mockStack).not.toHaveBeenCalled();
-  expect(mockSignIn).toHaveBeenCalled();
 });

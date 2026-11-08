@@ -14,7 +14,7 @@ const config: ExpoConfig = {
     bundleIdentifier: "app.plantopedia.companion",
     infoPlist: {
       NSCameraUsageDescription:
-        "Photograph plants to preserve evidence and explore identification suggestions.",
+        "Photograph plants and pollinators to preserve evidence and explore identification suggestions.",
       NSMicrophoneUsageDescription:
         "Talk with your AI plant companion when you start a voice conversation.",
     },
@@ -38,7 +38,7 @@ const config: ExpoConfig = {
     [
       "expo-camera",
       {
-        cameraPermission: "Photograph plants to preserve your observations.",
+        cameraPermission: "Photograph plants and pollinators to preserve your observations.",
         microphonePermission: "Talk with your plant companion.",
         recordAudioAndroid: false,
       },
@@ -47,7 +47,7 @@ const config: ExpoConfig = {
       "expo-image-picker",
       {
         photosPermission:
-          "Choose plant photographs to add to your private collection.",
+          "Choose plant and pollinator photographs to add to your private collection.",
         cameraPermission: false,
         microphonePermission: false,
       },

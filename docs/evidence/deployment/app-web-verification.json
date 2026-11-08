@@ -1,0 +1,19 @@
+{
+  "checkedAt": "2026-11-02T02:38:02.112Z",
+  "origin": "https://plantopedia-nine.vercel.app",
+  "status": "passed",
+  "checks": [
+    "Guest Home and daily quest open without sign-in",
+    "Typo search opens a sourced profile and one-tap care",
+    "Photo-free local save survives reload",
+    "Visible menu deletion and Undo restore the local plant",
+    "Rewards surface and avatar shop open",
+    "Bundled search works offline after loading",
+    "Narrow and large web layouts avoid page overflow"
+  ],
+  "errors": [],
+  "limits": [
+    "Chromium web guest only; no native camera, account mutation, real login or voice acceptance."
+  ],
+  "homeQuestMs": 794
+}

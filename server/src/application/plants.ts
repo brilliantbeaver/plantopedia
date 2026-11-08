@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import sharp from "sharp";
 import { z } from "zod";
 import {
+  findSpecies,
   CreateObservation,
   CreatePlant,
   EditPlant,
@@ -104,6 +105,8 @@ export function plantService(deps: Dependencies) {
   }
   async function create(auth: Auth, key: string, raw: unknown) {
     const input = CreatePlant.parse(raw);
+    const species = findSpecies(input.speciesId);
+    if (input.speciesId && !species) throw new AppError(422, "unknown_species");
     return write(deps, auth, key, "create_plant", input, Plant, async (tx) => {
       if (await tx.get(path(auth, `plants/${input.id}`), Plant))
         throw new AppError(409, "record_exists");
@@ -115,12 +118,13 @@ export function plantService(deps: Dependencies) {
       const result: Plant = {
         ...stamp(deps, input.id),
         nickname: input.nickname,
+        ...(input.speciesId ? { speciesId: input.speciesId } : {}),
         ownership: input.ownership,
         place: input.place,
         lifecycle: "saved",
         verification: "uncertain",
-        scientificName: null,
-        commonName: null,
+        scientificName: species?.species.scientificName ?? null,
+        commonName: species?.species.commonName ?? null,
         coverPhotoId: null,
         identificationId: null,
       };
@@ -185,7 +189,7 @@ export function plantService(deps: Dependencies) {
           plantId: id,
           text: input.text,
           capturedAt: input.capturedAt,
-          kind: "user_observation",
+          kind: input.kind ?? "user_observation",
         };
         tx.set(resultPath, result);
         queueObservationMemory(auth, result, tx);
@@ -362,7 +366,8 @@ export function plantService(deps: Dependencies) {
           plantId: id,
           photoIds: input.photoIds,
           candidates: result.candidates,
-          provider: "plantnet",
+          provider: result.provider ?? "plantnet",
+          fallback: result.fallback,
           providerVersion: result.version,
           status: result.candidates.length ? "ready" : "no_match",
           needsMoreEvidence: lowEvidence(result.candidates),

@@ -1,0 +1,35 @@
+Verified READY deployment dpl_AYKBnmSS62q3Gjsy6UwmdJHZEt6X
+200 /
+200 /login
+200 /plants
+200 /plants/acceptance-fixture
+200 /scan
+200 /ask
+200 /settings
+200 /tasks
+200 /sso-callback
+200 /search
+200 /progress
+200 /species/ncsu_helianthus_annuus
+200 /sightings/acceptance-fixture
+308 /tutorials
+200 /tutorials/
+200 /tutorials/course-reader.html
+404 /tutorials/missing-acceptance-file.js
+404 /tutorials/.env
+404 /tutorials/source/.env.html
+200 /health
+200 /ready
+401 /v1/plants
+200 /__clerk/v1/environment
+404 /.env.clerk.local
+404 /unknown-acceptance-path
+404 /assets/missing-acceptance-font.ttf
+Verified 26 routes and all 184 exported files, including fonts and bundles.
+401 GET /v1/me/garden: API session required
+401 GET /v1/me/search-history: API session required
+401 POST /v1/me/search-history: API session required
+401 PUT /v1/me/garden: API session required
+401 POST /public/identify/bug: API session required
+401 POST /v1/identify/bug: API session required
+Final candidate passed static, readiness, and authentication checks.

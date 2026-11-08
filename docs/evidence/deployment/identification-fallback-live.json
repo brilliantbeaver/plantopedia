@@ -1,0 +1,14 @@
+{
+  "checkedAt": "2026-11-02T02:11:29.094Z",
+  "mode": "controlled_live_openai_image",
+  "primaryFailure": "injected_provider_quota",
+  "model": "gpt-6.1-sol",
+  "provider": "openai_vision",
+  "fallback": {
+    "from": "plantnet",
+    "reason": "credit_or_quota"
+  },
+  "candidate": "Helianthus annuus",
+  "assessment": "visual_guess",
+  "durationMs": 2437
+}

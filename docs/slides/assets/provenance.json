@@ -1,0 +1,71 @@
+[
+  {
+    "file": "search-result.png",
+    "source": "docs/evidence/plantopedia-search.png",
+    "sourceSha256": "28524f4a57f3d36e2542c2d1e140a43c776ddd3059db25de7bd0612f0f1d7edc",
+    "crop": [
+      20,
+      264,
+      373,
+      852
+    ],
+    "size": [
+      353,
+      588
+    ]
+  },
+  {
+    "file": "plant-visitors.png",
+    "source": "docs/evidence/plantopedia-profile.png",
+    "sourceSha256": "f96c00dbf7196034b6c6b657dc69e2f629333463e05c5106442fe752242848a7",
+    "crop": [
+      20,
+      90,
+      373,
+      723
+    ],
+    "size": [
+      353,
+      633
+    ]
+  },
+  {
+    "file": "care-save.png",
+    "source": "docs/evidence/deployment/sunflower-care-web.png",
+    "sourceSha256": "6c3530e6797d11185556bf7cfd9f63e507921452a41aa73b40c409f61f44bcac",
+    "crop": [
+      20,
+      378,
+      372,
+      819
+    ],
+    "size": [
+      352,
+      441
+    ]
+  },
+  {
+    "file": "avatars/sprout.png",
+    "source": "assets/images/pollinators/avatar-sprout.png",
+    "sourceSha256": "5f480478c914382545284791fd4604eca0d209f4b9bf69e9476c90f73a30d541",
+    "transformation": "none"
+  },
+  {
+    "file": "avatars/sunshine.png",
+    "source": "assets/images/pollinators/avatar-sunshine.png",
+    "sourceSha256": "8bcb1dc5dc1fd2b1e2bb6f52f73e519e84fa88d5cdf653a6f78ee52eaa5f30e6",
+    "transformation": "none"
+  },
+  {
+    "file": "avatars/meadow.png",
+    "source": "assets/images/pollinators/avatar-meadow.png",
+    "sourceSha256": "1182719975314ed3aba29ef920935bee0c095aee47c0afb8a95866d4e30f3c74",
+    "transformation": "none"
+  },
+  {
+    "file": "avatars/pollen.png",
+    "source": "assets/images/pollinators/avatar-pollen.png",
+    "sourceSha256": "a635cccd0cc7655c9614ce60d1cd80bb552e748eab0658b90c219261c7fcd840",
+    "transformation": "none"
+  }
+]

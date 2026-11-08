@@ -13,14 +13,31 @@ import { StatusBar } from "expo-status-bar";
 import { AppIcon } from "../../components/AppIcon";
 import { usePreferences } from "../../theme/preferences";
 import { SignIn } from "./sign-in";
+import { useRouter, useLocalSearchParams, type Href } from "expo-router";
+import { Action } from "../../components/ui";
+import { GlassSurface } from "../../theme/GlassSurface";
+import { BotanicalGlow } from "../../theme/BotanicalGlow";
+import { safeReturnTo } from "./return-to";
 
-export function WelcomeScreen() {
+export function WelcomeScreen({
+  returnTo: destination,
+}: { returnTo?: string } = {}) {
+  const router = useRouter();
+  const { returnTo } = useLocalSearchParams<{ returnTo?: string }>();
+  const resume = safeReturnTo(destination ?? returnTo);
+  const browse =
+    resume === "/journey" ||
+    resume.startsWith("/search") ||
+    resume.startsWith("/species/")
+      ? resume
+      : "/explore";
   const { colors, mode, t } = usePreferences();
   const { width, fontScale } = useWindowDimensions();
   const wide = width >= 960 && fontScale < 1.5;
   const compact = width < 600;
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.canvas }]}>
+      <BotanicalGlow />
       <StatusBar style={mode === "dark" ? "light" : "dark"} />
       <KeyboardAvoidingView
         style={styles.safe}
@@ -48,13 +65,20 @@ export function WelcomeScreen() {
               </View>
             </View>
 
-            <View
+            <Action
+              secondary
+              compact
+              icon="arrow-back"
+              title={t("continueExploring")}
+              onPress={() => router.replace(browse as Href)}
+            />
+            <GlassSurface
               style={[
                 styles.shell,
                 {
                   flexDirection: wide ? "row" : "column",
-                  backgroundColor: colors.surface,
                   borderColor: colors.border,
+                  padding: 0,
                 },
               ]}
             >
@@ -65,22 +89,32 @@ export function WelcomeScreen() {
                 accessible={false}
                 style={[
                   styles.botanical,
-                  wide ? { width: "46%", minHeight: 540 } : { width: "100%" },
+                  wide
+                    ? { width: "46%", minHeight: 540 }
+                    : { width: "100%", minHeight: compact ? 132 : 224 },
                 ]}
               >
                 <View
-                  style={[styles.introduction, { padding: wide ? 40 : 28 }]}
+                  style={[
+                    styles.introduction,
+                    { padding: compact ? 20 : wide ? 40 : 28 },
+                  ]}
                 >
                   <Text
                     accessibilityRole="header"
                     style={[
                       styles.title,
-                      { fontSize: wide ? 44 : 32, lineHeight: wide ? 50 : 38 },
+                      {
+                        fontSize: compact ? 26 : wide ? 44 : 32,
+                        lineHeight: compact ? 32 : wide ? 50 : 38,
+                      },
                     ]}
                   >
                     {t("welcome")}
                   </Text>
-                  <Text style={styles.description}>{t("authIntro")}</Text>
+                  {!compact && (
+                    <Text style={styles.description}>{t("authIntro")}</Text>
+                  )}
                 </View>
               </ImageBackground>
 
@@ -89,7 +123,6 @@ export function WelcomeScreen() {
                   styles.signInPanel,
                   {
                     padding: compact ? 20 : wide ? 40 : 32,
-                    backgroundColor: colors.surface,
                   },
                 ]}
               >
@@ -102,7 +135,7 @@ export function WelcomeScreen() {
                       {t("signIn")}
                     </Text>
                   )}
-                  <SignIn />
+                  <SignIn returnTo={resume} />
                 </View>
                 <View
                   style={[styles.privacy, { borderTopColor: colors.border }]}
@@ -119,7 +152,7 @@ export function WelcomeScreen() {
                   </Text>
                 </View>
               </View>
-            </View>
+            </GlassSurface>
             <Text style={[styles.note, { color: colors.secondary }]}>
               {t("ai")}
             </Text>

@@ -21,6 +21,7 @@ import {
   type TextInputProps,
   type ViewStyle,
   type StyleProp,
+  type PressableProps,
 } from "react-native";
 import {
   SafeAreaView,
@@ -30,13 +31,16 @@ import { usePreferences } from "../theme/preferences";
 import { useReducedMotion } from "../theme/use-reduced-motion";
 import { navigationLayout } from "../theme/navigation-layout";
 import { AppIcon, IconBadge, type IconName } from "./AppIcon";
+import { BotanicalGlow } from "../theme/BotanicalGlow";
 
 export function Screen({
   children,
   scrollRef,
+  vivid = false,
 }: {
   children: ReactNode;
   scrollRef?: RefObject<ScrollView | null>;
+  vivid?: boolean;
 }) {
   const { colors } = usePreferences();
   const { width, fontScale } = useWindowDimensions();
@@ -52,6 +56,7 @@ export function Screen({
       edges={["top", "left", "right"]}
       style={{ flex: 1, backgroundColor: colors.canvas }}
     >
+      {vivid && <BotanicalGlow />}
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -123,6 +128,8 @@ export function Action({
   disabled = false,
   busy = false,
   accessibilityLabel,
+  accessibilityActions,
+  onAccessibilityAction,
   icon,
   destructive = false,
   compact = false,
@@ -135,6 +142,8 @@ export function Action({
   disabled?: boolean;
   busy?: boolean;
   accessibilityLabel?: string;
+  accessibilityActions?: PressableProps["accessibilityActions"];
+  onAccessibilityAction?: PressableProps["onAccessibilityAction"];
   icon?: IconName | undefined;
   destructive?: boolean;
   compact?: boolean;
@@ -152,6 +161,8 @@ export function Action({
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel ?? title}
+      accessibilityActions={accessibilityActions}
+      onAccessibilityAction={onAccessibilityAction}
       accessibilityState={{
         disabled: disabled || busy,
         busy,

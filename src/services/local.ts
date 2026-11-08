@@ -3,12 +3,23 @@ import { Directory, File, Paths } from "expo-file-system";
 import { Id, type PlantDetail } from "@plantopedia/contracts";
 import { Draft } from "./local-schema";
 export { Draft } from "./local-schema";
-const database = openDatabaseAsync("plantopedia.db").then(async (db) => {
-  await db.execAsync(
-    "PRAGMA journal_mode = WAL; CREATE TABLE IF NOT EXISTS drafts (owner TEXT NOT NULL, id TEXT NOT NULL, value TEXT NOT NULL, PRIMARY KEY(owner,id)); CREATE TABLE IF NOT EXISTS cache (owner TEXT NOT NULL, id TEXT NOT NULL, value TEXT NOT NULL, PRIMARY KEY(owner,id)); PRAGMA user_version = 1;",
-  );
-  return db;
-});
+let opened: ReturnType<typeof initialize> | undefined;
+export function database() {
+  return (opened ??= initialize());
+}
+function initialize() {
+  return openDatabaseAsync("plantopedia.db").then(async (db) => {
+    await db.execAsync(
+      "PRAGMA journal_mode = WAL; CREATE TABLE IF NOT EXISTS drafts (owner TEXT NOT NULL, id TEXT NOT NULL, value TEXT NOT NULL, PRIMARY KEY(owner,id)); CREATE TABLE IF NOT EXISTS cache (owner TEXT NOT NULL, id TEXT NOT NULL, value TEXT NOT NULL, PRIMARY KEY(owner,id)); CREATE TABLE IF NOT EXISTS feature_state (owner TEXT NOT NULL, key TEXT NOT NULL, value TEXT NOT NULL, PRIMARY KEY(owner,key));",
+    );
+    const version = await db.getFirstAsync<{ user_version: number }>(
+      "PRAGMA user_version",
+    );
+    if ((version?.user_version ?? 0) < 2)
+      await db.execAsync("PRAGMA user_version = 2");
+    return db;
+  });
+}
 export const local = {
   async purgeOwner(owner: string) {
     Id.parse(owner);
@@ -16,8 +27,15 @@ export const local = {
       await local.purge(owner, draft.id);
     const directory = new Directory(Paths.document, "originals", owner);
     if (directory.exists) directory.delete();
-    const db = await database;
+    const db = await database();
     await db.runAsync("DELETE FROM cache WHERE owner = ?", owner);
+    await db.runAsync("DELETE FROM feature_state WHERE owner = ?", owner);
+  },
+  async removeOriginal(owner: string, id: string) {
+    Id.parse(owner);
+    Id.parse(id);
+    const file = new File(Paths.document, "originals", owner, id);
+    if (file.exists) file.delete();
   },
   async retain(owner: string, id: string, uri: string) {
     Id.parse(owner);
@@ -31,7 +49,7 @@ export const local = {
   },
   async save(draft: Draft) {
     const value = Draft.parse(draft);
-    const db = await database;
+    const db = await database();
     await db.runAsync(
       "INSERT OR REPLACE INTO drafts(owner,id,value) VALUES (?,?,?)",
       value.owner,
@@ -40,7 +58,7 @@ export const local = {
     );
   },
   async drafts(owner: string) {
-    const db = await database;
+    const db = await database();
     const rows = await db.getAllAsync<{ value: string }>(
       "SELECT value FROM drafts WHERE owner = ?",
       owner,
@@ -48,7 +66,7 @@ export const local = {
     return rows.map((row) => Draft.parse(JSON.parse(row.value)));
   },
   async cache(owner: string, detail: PlantDetail) {
-    const db = await database;
+    const db = await database();
     await db.runAsync(
       "INSERT OR REPLACE INTO cache(owner,id,value) VALUES (?,?,?)",
       owner,
@@ -57,7 +75,7 @@ export const local = {
     );
   },
   async cached(owner: string, id: string): Promise<unknown> {
-    const db = await database;
+    const db = await database();
     const row = await db.getFirstAsync<{ value: string }>(
       "SELECT value FROM cache WHERE owner = ? AND id = ?",
       owner,
@@ -66,13 +84,13 @@ export const local = {
     return row ? (JSON.parse(row.value) as unknown) : null;
   },
   async references(owner: string) {
-    const db = await database;
+    const db = await database();
     const cached = await db.getAllAsync<{ id: string }>(
       "SELECT id FROM cache WHERE owner = ?",
       owner,
     );
     const acknowledged = (await local.drafts(owner))
-      .filter((draft) => draft.stage !== "draft")
+      .filter((draft) => draft.stage !== "draft" && draft.mode !== "bug")
       .map((draft) => draft.id);
     return [...new Set([...cached.map((row) => row.id), ...acknowledged])];
   },
@@ -82,7 +100,7 @@ export const local = {
     );
     if (pending) {
       await local.save({ ...pending, failure: "record_deleted" });
-      const db = await database;
+      const db = await database();
       await db.runAsync(
         "DELETE FROM cache WHERE owner = ? AND id = ?",
         owner,
@@ -91,7 +109,7 @@ export const local = {
     } else await local.purge(owner, id);
   },
   async purge(owner: string, id: string) {
-    const db = await database;
+    const db = await database();
     const rows = await local.drafts(owner);
     for (const row of rows.filter((item) => item.id === id)) {
       const original = new File(row.original);

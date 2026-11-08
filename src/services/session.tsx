@@ -13,6 +13,9 @@ import { apiClient, type ApiClient } from "./api";
 import { AppState } from "react-native";
 import { local } from "./local";
 import { z } from "zod";
+import { guestApi, GUEST_OWNER } from "./guest-api";
+import { featureStorage } from "./feature-storage";
+import { deletionQueue } from "../features/garden/deletion";
 import {
   createVoiceSession,
   type VoiceSessionController,
@@ -20,6 +23,7 @@ import {
 const Context = createContext<{
   api: ApiClient;
   owner: string;
+  kind?: "cloud" | "guest";
   voice: VoiceSessionController;
   registerCleanup: (cleanup: () => Promise<void>) => () => void;
   release: () => Promise<void>;
@@ -110,8 +114,10 @@ export function SessionProvider({ children }: { children: ReactNode }) {
             },
           );
           if (stopped) return;
+          const pending = await deletionQueue(userId, featureStorage).list();
           for (const record of result.records)
-            if (!record.exists) await local.reconcileDeleted(userId, record.id);
+            if (!record.exists && !pending.some((x) => x.id === record.id))
+              await local.reconcileDeleted(userId, record.id);
         }
       } catch {
         /* Remain offline; never delete local evidence on a failed status request. */
@@ -135,7 +141,40 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   if (!userId) return null;
   return (
     <Context.Provider
-      value={{ api: scope, owner: userId, voice, ...resources }}
+      value={{ api: scope, owner: userId, kind: "cloud", voice, ...resources }}
+    >
+      {children}
+    </Context.Provider>
+  );
+}
+export function GuestSessionProvider({ children }: { children: ReactNode }) {
+  const api = useMemo(() => guestApi(), []);
+  const voice = useMemo(() => createVoiceSession(api, null), [api]);
+  const resources = useMemo(() => {
+    const cleanups = new Set<() => Promise<void>>();
+    return {
+      registerCleanup(cleanup: () => Promise<void>) {
+        cleanups.add(cleanup);
+        return () => {
+          cleanups.delete(cleanup);
+        };
+      },
+      async release() {
+        await Promise.allSettled([...cleanups].map((f) => f()));
+        await voice.transport.disconnect();
+      },
+    };
+  }, [voice]);
+  useEffect(() => {
+    api.activate();
+    return () => {
+      api.dispose();
+      void voice.transport.disconnect();
+    };
+  }, [api, voice]);
+  return (
+    <Context.Provider
+      value={{ api, owner: GUEST_OWNER, kind: "guest", voice, ...resources }}
     >
       {children}
     </Context.Provider>

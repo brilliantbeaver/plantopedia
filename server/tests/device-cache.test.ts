@@ -2,6 +2,10 @@ import { DatabaseSync } from "node:sqlite";
 import { beforeEach, test, expect, jest } from "@jest/globals";
 import { Draft } from "../../src/services/local-schema.js";
 const sqlite = new DatabaseSync(":memory:");
+sqlite.exec(
+  "PRAGMA user_version=7; CREATE TABLE cache(owner TEXT NOT NULL,id TEXT NOT NULL,value TEXT NOT NULL,PRIMARY KEY(owner,id)); INSERT INTO cache VALUES('legacy','legacy','{}');",
+);
+let transactionTail = Promise.resolve();
 const files = new Set<string>();
 class File {
   uri: string;
@@ -44,6 +48,33 @@ jest.unstable_mockModule("expo-sqlite", () => ({
       sqlite.prepare(sql).all(...args),
     getFirstAsync: async (sql: string, ...args: string[]) =>
       sqlite.prepare(sql).get(...args),
+    withExclusiveTransactionAsync: async (
+      work: (tx: {
+        getFirstAsync: (sql: string, ...args: string[]) => Promise<unknown>;
+        runAsync: (sql: string, ...args: string[]) => Promise<unknown>;
+      }) => Promise<void>,
+    ) => {
+      const prior = transactionTail;
+      let release = () => {};
+      transactionTail = new Promise<void>((resolve) => {
+        release = resolve;
+      });
+      await prior;
+      sqlite.exec("BEGIN IMMEDIATE");
+      try {
+        await work({
+          getFirstAsync: async (sql, ...args) =>
+            sqlite.prepare(sql).get(...args),
+          runAsync: async (sql, ...args) => sqlite.prepare(sql).run(...args),
+        });
+        sqlite.exec("COMMIT");
+      } catch (e) {
+        sqlite.exec("ROLLBACK");
+        throw e;
+      } finally {
+        release();
+      }
+    },
     withTransactionAsync: async (work: () => Promise<void>) => {
       sqlite.exec("BEGIN");
       try {
@@ -56,9 +87,17 @@ jest.unstable_mockModule("expo-sqlite", () => ({
     },
   }),
 }));
-const { local } = await import("../../src/services/local.js");
+const { local, database } = await import("../../src/services/local.js");
+await database();
+const initialVersion = sqlite.prepare("PRAGMA user_version").get();
+const legacy = sqlite.prepare("SELECT * FROM cache WHERE owner='legacy'").get();
+const { featureStorage } =
+  await import("../../src/services/feature-storage.js");
+const { deletionQueue } = await import("../../src/features/garden/deletion.js");
 beforeEach(() => {
-  sqlite.exec("DELETE FROM drafts; DELETE FROM cache;");
+  sqlite.exec(
+    "DELETE FROM drafts; DELETE FROM cache; DELETE FROM feature_state;",
+  );
   files.clear();
 });
 function draft(id: string, owner: string, stage: Draft["stage"]) {
@@ -112,4 +151,27 @@ test("explicit account deletion removes only that owner files and drafts", async
   ]);
   expect([...files].some((uri) => uri.includes("/user_a/"))).toBe(false);
   expect([...files].some((uri) => uri.includes("/user_b/"))).toBe(true);
+});
+
+test("feature migration preserves a future version and pre-existing cached data", () => {
+  expect(initialVersion?.user_version).toBe(7);
+  expect(legacy?.id).toBe("legacy");
+});
+test("SQLite transactions deduplicate concurrent deletion intents without touching another profile", async () => {
+  const queue = deletionQueue("user_a", featureStorage);
+  await Promise.all(
+    Array.from({ length: 8 }, () =>
+      queue.enqueue(
+        { id: "plant_1", label: "Sunflower", kind: "plant" },
+        Date.now(),
+      ),
+    ),
+  );
+  expect(await queue.list()).toHaveLength(1);
+  expect(await deletionQueue("user_b", featureStorage).list()).toEqual([]);
+});
+test("animal draft references never enter private plant reconciliation", async () => {
+  await local.save({ ...draft("bug", "user_a", "complete"), mode: "bug" });
+  await local.save(draft("plant", "user_a", "complete"));
+  expect(await local.references("user_a")).toEqual(["plant"]);
 });

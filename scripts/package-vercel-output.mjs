@@ -117,9 +117,13 @@ export async function packageVercelOutput(root = defaultRoot) {
             headers: { Location: "/tutorials/" },
           },
           { src: "^/tutorials/$", dest: "/tutorials/index.html" },
-          { src: "^/$", status: 307, headers: { Location: "/plants" } },
           {
-            src: "^/(?:login|plants(?:/[^/]+)?|scan|ask|settings|tasks|sso-callback)/?$",
+            src: "^/$",
+            dest: "/index.html",
+            headers: { "Cache-Control": "no-cache" },
+          },
+          {
+            src: "^/(?:login|explore|plants(?:/[^/]+)?|scan|ask|settings|tasks|sso-callback|search|journey|progress|species/[^/]+|sightings/[^/]+)/?$",
             dest: "/index.html",
             headers: { "Cache-Control": "no-cache" },
           },
@@ -134,7 +138,7 @@ export async function packageVercelOutput(root = defaultRoot) {
             continue: true,
           },
           {
-            src: "^/(v1(?:/.*)?|__clerk(?:/.*)?|health|ready)$",
+            src: "^/(v1(?:/.*)?|public/identify/(?:plant|bug)|public/plants/search|__clerk(?:/.*)?|health|ready)$",
             dest: "/api",
             transforms: [{ type: "request.path", op: "set", args: "/$1" }],
           },

@@ -3,20 +3,37 @@ import {
   render,
   screen,
   waitFor,
-  within,
 } from "@testing-library/react-native";
-import { Modal } from "react-native";
-import { PlantDetail, type Identification } from "@plantopedia/contracts";
+import {
+  GardenData,
+  PlantDetail,
+  type Identification,
+} from "@plantopedia/contracts";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { PreferencesProvider } from "../../src/theme/preferences";
 import PlantProfile from "../../src/app/plants/[plantId]";
+const mockRemove = jest.fn(async () => {});
+jest.mock("../../src/features/garden/DeletionProvider", () => ({
+  useDeletion: () => ({ items: [], remove: mockRemove }),
+}));
 const mockPush = jest.fn();
 const mockReplace = jest.fn();
+const mockSelectionRequest = jest.fn();
 const mockApi = {
   plant: jest.fn(),
   observe: jest.fn(),
   startConversation: jest.fn(),
-  request: jest.fn(),
+  request: jest.fn(
+    async (
+      route: string,
+      schema: { parse: (raw: unknown) => unknown },
+      options?: unknown,
+    ) => {
+      if (route === "/me/garden")
+        return schema.parse({ revision: 0, data: GardenData.parse({}) });
+      return mockSelectionRequest(route, schema, options);
+    },
+  ),
   identify: jest.fn(),
 };
 const mockLocal = {
@@ -90,7 +107,7 @@ beforeEach(() => {
   jest.clearAllMocks();
   mockApi.observe.mockReset();
   mockApi.startConversation.mockReset();
-  mockApi.request.mockReset();
+  mockSelectionRequest.mockReset();
   mockApi.identify.mockReset();
   mockApi.plant.mockResolvedValue(fixture());
 });
@@ -165,7 +182,7 @@ test("a saved camera photo reaches identification and selection without ES2023 a
     mockApi.plant.mockResolvedValue(detail);
     return result;
   });
-  mockApi.request.mockImplementation(async () => {
+  mockSelectionRequest.mockImplementation(async () => {
     detail = {
       ...detail,
       plant: {
@@ -204,7 +221,7 @@ test("a saved camera photo reaches identification and selection without ES2023 a
   );
   fireEvent.press(choice);
   await screen.findByRole("button", { name: "Edit identification" });
-  expect(mockApi.request.mock.calls[0]?.[2].body).toMatchObject({
+  expect(mockSelectionRequest.mock.calls[0]?.[2].body).toMatchObject({
     identificationId: result.id,
     candidateIndex: 1,
   });
@@ -261,24 +278,19 @@ test("the observation disclosure retains the note and idempotency key after a lo
   );
   close();
 });
-test("plant deletion is discoverable in More options and executes only after confirmation", async () => {
-  mockApi.request.mockResolvedValue({ deleted: true });
+test("plant deletion queues undo before any destructive call", async () => {
   const close = show();
   await screen.findByText("Patio rose");
-  expect(screen.queryByRole("button", { name: "Delete" })).toBeNull();
   fireEvent.press(screen.getByRole("button", { name: "More options" }));
   fireEvent.press(screen.getByRole("button", { name: "Delete" }));
-  expect(mockApi.request).not.toHaveBeenCalled();
-  fireEvent.press(screen.getByRole("button", { name: "Cancel" }));
-  expect(mockApi.request).not.toHaveBeenCalled();
-  fireEvent.press(screen.getByRole("button", { name: "Delete" }));
-  fireEvent.press(
-    within(screen.UNSAFE_getByType(Modal)).getByRole("button", {
-      name: "Delete",
+  await waitFor(() =>
+    expect(mockRemove).toHaveBeenCalledWith({
+      id: "plant_a",
+      label: "Patio rose",
+      kind: "plant",
     }),
   );
-  await waitFor(() => expect(mockReplace).toHaveBeenCalledWith("/plants"));
-  expect(mockApi.request).toHaveBeenCalledTimes(1);
-  expect(mockLocal.purge).toHaveBeenCalledWith("user_a", "plant_a");
+  expect(mockSelectionRequest).not.toHaveBeenCalled();
+  expect(mockLocal.purge).not.toHaveBeenCalled();
   close();
 });

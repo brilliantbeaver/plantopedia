@@ -1,0 +1,52 @@
+{
+  "helianthus-annuus": {
+    "uri": "helianthus-annuus",
+    "creator": "Bernadette Clark",
+    "license": "CC BY 2.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/2.0/legalcode",
+    "sourceUrl": "https://plants.ces.ncsu.edu/plants/helianthus-annuus/",
+    "originalUrl": "https://eit-planttoolbox-prod.s3.amazonaws.com/media/images/Helianthus_Suncredi_8uh7NA5sq3DU.jfif",
+    "retrievedAt": "2026-11-01",
+    "modification": "Resized and JPEG encoded; display may crop thumbnails."
+  },
+  "echinacea-purpurea": {
+    "uri": "echinacea-purpurea",
+    "creator": "Cathy Dewitt",
+    "license": "CC BY 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/legalcode",
+    "sourceUrl": "https://plants.ces.ncsu.edu/plants/echinacea-purpurea/",
+    "originalUrl": "https://eit-planttoolbox-prod.s3.amazonaws.com/media/images/Echinicea-pupura-flo_7K70VADc4HkM.jpe",
+    "retrievedAt": "2026-11-01",
+    "modification": "Resized and JPEG encoded; display may crop thumbnails."
+  },
+  "asclepias-syriaca": {
+    "uri": "asclepias-syriaca",
+    "creator": "Cathy DeWitt",
+    "license": "CC BY 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/legalcode",
+    "sourceUrl": "https://plants.ces.ncsu.edu/plants/asclepias-syriaca/",
+    "originalUrl": "https://eit-planttoolbox-prod.s3.amazonaws.com/media/images/Asclepias-syriaca-Mi_LYNklqRbWrUH.jpeg",
+    "retrievedAt": "2026-11-01",
+    "modification": "Resized and JPEG encoded; display may crop thumbnails."
+  },
+  "wisteria-sinensis": {
+    "uri": "wisteria-sinensis",
+    "creator": "Photo by Bri Weldon",
+    "license": "CC BY 2.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/2.0/legalcode",
+    "sourceUrl": "https://plants.ces.ncsu.edu/plants/wisteria-sinensis/",
+    "originalUrl": "https://eit-planttoolbox-prod.s3.amazonaws.com/media/images/Wisteria-sinensis--Bri-Weldon--cc-by-2-0.jpg",
+    "retrievedAt": "2026-11-01",
+    "modification": "Resized and JPEG encoded; display may crop thumbnails."
+  },
+  "ginkgo-biloba": {
+    "uri": "ginkgo-biloba",
+    "creator": "Ginkgo CZ",
+    "license": "CC BY 2.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/2.0/legalcode",
+    "sourceUrl": "https://plants.ces.ncsu.edu/plants/ginkgo-biloba/",
+    "originalUrl": "https://eit-planttoolbox-prod.s3.amazonaws.com/media/images/ginkgo_biloba_Ginkgo_CZ-ccby201_qVmuCju.jpg",
+    "retrievedAt": "2026-11-01",
+    "modification": "Resized and JPEG encoded; display may crop thumbnails."
+  }
+}

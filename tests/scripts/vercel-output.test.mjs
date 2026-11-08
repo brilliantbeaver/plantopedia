@@ -101,6 +101,19 @@ test("clean source builds package generated static files and self-contained work
     assert.equal(matches("/plants")[0].dest, "/index.html");
     assert.equal(matches("/v1/plants")[0].dest, "/api");
     assert.equal(matches("/tutorials-other").length, 0);
+    assert.equal(matches("/")[0].dest, "/index.html");
+    for (const path of [
+      "/search",
+      "/explore",
+      "/progress",
+      "/journey",
+      "/species/ncsu_sunflower",
+      "/sightings/example",
+    ])
+      assert.equal(matches(path)[0].dest, "/index.html");
+    assert.equal(matches("/public/identify/bug")[0].dest, "/api");
+    assert.equal(matches("/public/plants/search")[0].dest, "/api");
+    assert.equal(matches("/.env").length, 0);
 
     assert.equal(existsSync(join(functionDir, config.handler)), true);
     f.write("server/.vercel/output/static/stale.js", "stale");

@@ -1,5 +1,7 @@
+import { findSpecies } from "../features/catalog/catalog";
+import { ReferencePhoto, TraitChips } from "../features/catalog/Comparison";
 import type { Candidate } from "@plantopedia/contracts";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View, Image } from "react-native";
 import { usePreferences } from "../theme/preferences";
 import { Card, Action } from "./ui";
 export function CandidateCard({
@@ -18,6 +20,7 @@ export function CandidateCard({
   current?: boolean;
 }) {
   const { t, colors, preferences } = usePreferences();
+  const profile = findSpecies(candidate.scientificName);
   const score = new Intl.NumberFormat(preferences.locale, {
     style: "percent",
     maximumFractionDigits: 1,
@@ -43,27 +46,48 @@ export function CandidateCard({
           {candidate.scientificName}
         </Text>
       )}
+      {profile ? (
+        <>
+          <ReferencePhoto profile={profile} />
+          <TraitChips profile={profile} />
+        </>
+      ) : (
+        <>
+          <Image
+            source={require("../../assets/images/botanical.png")}
+            accessibilityLabel={t("referenceImage")}
+            style={{ height: 160, width: "100%", borderRadius: 22 }}
+          />
+          <Text style={{ color: colors.secondary, fontSize: 16 }}>
+            {t("traitsMissing")}
+          </Text>
+        </>
+      )}
       <View style={candidateStyles.scoreRow}>
         <Text style={[candidateStyles.label, { color: colors.secondary }]}>
-          {t("confidence")} · Pl@ntNet
+          {candidate.assessment === "visual_guess"
+            ? t("visionFallback")
+            : `${t("confidence")} · Pl@ntNet`}
         </Text>
         <Text style={[candidateStyles.score, { color: colors.text }]}>
-          {score}
+          {candidate.assessment === "visual_guess" ? t("bestGuess") : score}
         </Text>
       </View>
-      <View
-        accessible={false}
-        style={[candidateStyles.track, { backgroundColor: colors.muted }]}
-      >
+      {candidate.assessment !== "visual_guess" && (
         <View
-          style={{
-            height: 4,
-            width: `${candidate.score * 100}%`,
-            backgroundColor: colors.primary,
-            borderRadius: 2,
-          }}
-        />
-      </View>
+          accessible={false}
+          style={[candidateStyles.track, { backgroundColor: colors.muted }]}
+        >
+          <View
+            style={{
+              height: 4,
+              width: `${candidate.score * 100}%`,
+              backgroundColor: colors.primary,
+              borderRadius: 2,
+            }}
+          />
+        </View>
+      )}
       <Action
         secondary={!top}
         title={t(current ? "currentIdentification" : "select")}

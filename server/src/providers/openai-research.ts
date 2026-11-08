@@ -8,7 +8,10 @@ import {
   searchSources,
 } from "./search-support.js";
 
-export function createOpenAIResearch(config: Config): ResearchProvider {
+export function createOpenAIResearch(
+  config: Config,
+  allowEmpty = false,
+): ResearchProvider {
   const client = new OpenAI({
     apiKey: config.OPENAI_API_KEY,
     timeout: 6500,
@@ -64,7 +67,8 @@ export function createOpenAIResearch(config: Config): ResearchProvider {
             }
           }
         }
-        if (!citations.length) throw new SearchFailure("invalid_response");
+        if (!citations.length && !allowEmpty)
+          throw new SearchFailure("invalid_response");
         return searchSources(citations);
       } catch (error) {
         throw searchFailure(error);

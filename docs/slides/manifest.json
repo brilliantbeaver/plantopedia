@@ -1,0 +1,121 @@
+[
+  {
+    "number": 1,
+    "title": "Your neighborhood is alive.",
+    "role": "cover",
+    "layout": "cover-organic-cluster",
+    "file": "slide_01.html"
+  },
+  {
+    "number": 2,
+    "title": "A flower-watch mystery",
+    "role": "thesis",
+    "layout": "mystery-bridge",
+    "file": "slide_02.html"
+  },
+  {
+    "number": 3,
+    "title": "Find your place in the journey",
+    "role": "chronology",
+    "layout": "app-tour",
+    "file": "slide_03.html"
+  },
+  {
+    "number": 4,
+    "title": "Search for a plant you want to know",
+    "role": "chronology",
+    "layout": "app-tour",
+    "file": "slide_04.html"
+  },
+  {
+    "number": 5,
+    "title": "Read the plant’s flower visitors",
+    "role": "chronology",
+    "layout": "app-tour app-tour-reverse",
+    "file": "slide_05.html"
+  },
+  {
+    "number": 6,
+    "title": "Try the pollination question",
+    "role": "chronology",
+    "layout": "app-tour",
+    "file": "slide_06.html"
+  },
+  {
+    "number": 7,
+    "title": "A tiny delivery. A new beginning.",
+    "role": "chronology",
+    "layout": "process-ribbon",
+    "file": "slide_07.html"
+  },
+  {
+    "number": 8,
+    "title": "Save a plant to your field guide",
+    "role": "chronology",
+    "layout": "app-tour",
+    "file": "slide_08.html"
+  },
+  {
+    "number": 9,
+    "title": "Make a real observation check-in",
+    "role": "chronology",
+    "layout": "app-tour app-tour-reverse",
+    "file": "slide_09.html"
+  },
+  {
+    "number": 10,
+    "title": "Keep the details with your plant",
+    "role": "chronology",
+    "layout": "app-tour",
+    "file": "slide_10.html"
+  },
+  {
+    "number": 11,
+    "title": "Ask about the connection you noticed",
+    "role": "chronology",
+    "layout": "app-tour app-tour-reverse",
+    "file": "slide_11.html"
+  },
+  {
+    "number": 12,
+    "title": "Use a photo as a clue",
+    "role": "chronology",
+    "layout": "app-tour",
+    "file": "slide_12.html"
+  },
+  {
+    "number": 13,
+    "title": "Read your progress without guessing",
+    "role": "chronology",
+    "layout": "app-tour app-tour-reverse",
+    "file": "slide_13.html"
+  },
+  {
+    "number": 14,
+    "title": "Choose a style with your Pollen",
+    "role": "chronology",
+    "layout": "app-tour",
+    "file": "slide_14.html"
+  },
+  {
+    "number": 15,
+    "title": "Think local. Think variety. Think seasons.",
+    "role": "synthesis",
+    "layout": "ledger-columns",
+    "file": "slide_15.html"
+  },
+  {
+    "number": 16,
+    "title": "Now tell your own flower-watch story",
+    "role": "chronology",
+    "layout": "mission-payoff",
+    "file": "slide_16.html"
+  },
+  {
+    "number": 17,
+    "title": "Start small. Notice more.",
+    "role": "closing",
+    "layout": "manifesto-wall",
+    "file": "slide_17.html"
+  }
+]

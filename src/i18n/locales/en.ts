@@ -1,8 +1,14 @@
+import { plantSearchCopy } from "./plant-search";
+import { guestCopy } from "./guest";
+import { pollinatorCopy } from "./pollinators";
 import { authCopy } from "./auth";
 import { voiceSettingsCopy } from "./voice-settings";
 import { liveVoiceCopy } from "./live-voice";
 import { uxCopy } from "./ux";
 export const en = {
+  ...pollinatorCopy["en"],
+  ...plantSearchCopy["en"],
+  ...guestCopy["en"],
   ...liveVoiceCopy["en"],
   ...voiceSettingsCopy["en"],
   ...authCopy["en"],

@@ -1,0 +1,13 @@
+200 /: public HTML matches the verified release
+200 /search?q=lavender: current app release
+200 /login?returnTo=%2Fsearch%3Fq%3Dlavender: current app release
+200 /scan: current app release
+200 /plants: current app release
+200 /progress: current app release
+200 /health: ok
+200 /ready: ready
+401 GET /v1/me/garden: requires an app session
+401 GET /v1/me/search-history: requires an app session
+401 POST /public/identify/bug: requires an app session
+401 POST /v1/identify/bug: requires an app session
+Public entry bundles match the final tested build.

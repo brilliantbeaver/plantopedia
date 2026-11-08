@@ -1,6 +1,11 @@
+import { RequireSignIn } from "../auth/RequireSignIn";
+import {
+  stagePhotoDiscovery,
+  acknowledgeRewardAction,
+} from "../rewards/service";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { randomUUID } from "expo-crypto";
 import {
   Plant,
@@ -16,7 +21,7 @@ import { useSessionApi } from "../../services/session";
 import { local } from "../../services/local";
 import { RequestError } from "../../services/api";
 
-export function IdentificationPanel({
+function CloudIdentificationPanel({
   data,
   focusedPhotoId,
   onPhotoFocus,
@@ -137,7 +142,7 @@ export function IdentificationPanel({
   });
   const selection = useMutation({
     retry: false,
-    mutationFn: (input: {
+    mutationFn: async (input: {
       identificationId: string;
       candidateIndex: number | null;
       scientificName?: string;
@@ -146,7 +151,13 @@ export function IdentificationPanel({
       const signature = JSON.stringify(body);
       if (choiceAttempt.current?.signature !== signature)
         choiceAttempt.current = { signature, key: randomUUID() };
-      return api.request(
+      const receipt = await stagePhotoDiscovery(
+        owner,
+        api,
+        query.getQueryData<PlantDetail>(queryKey) ?? data,
+        body,
+      );
+      const plant = await api.request(
         `/plants/${data.plant.id}/identification-selection`,
         Plant,
         {
@@ -155,8 +166,11 @@ export function IdentificationPanel({
           key: choiceAttempt.current.key,
         },
       );
+      if (receipt) await acknowledgeRewardAction(owner, api, receipt);
+      return plant;
     },
     onSuccess: (plant) => {
+      void query.invalidateQueries({ queryKey: [owner, "garden-metadata"] });
       if (!mounted.current) return;
       query.setQueryData<PlantDetail>(queryKey, (current) =>
         current ? { ...current, plant } : current,
@@ -254,11 +268,13 @@ export function IdentificationPanel({
               )}
               <Text style={[panel.small, { color: colors.primary }]}>
                 {t("yourChoice")}
-                {chosenCandidate
-                  ? ` · ${new Intl.NumberFormat(preferences.locale, { style: "percent", maximumFractionDigits: 1 }).format(chosenCandidate.score)} ${t("confidence")}`
-                  : data.plant.verification === "user_corrected"
-                    ? ` · ${t("manualIdentification")}`
-                    : ""}
+                {chosenCandidate?.assessment === "visual_guess"
+                  ? ` · ${t("visionFallback")}`
+                  : chosenCandidate
+                    ? ` · ${new Intl.NumberFormat(preferences.locale, { style: "percent", maximumFractionDigits: 1 }).format(chosenCandidate.score)} ${t("confidence")}`
+                    : data.plant.verification === "user_corrected"
+                      ? ` · ${t("manualIdentification")}`
+                      : ""}
               </Text>
               {photosFor(chosenEvidence)}
               <Action
@@ -309,6 +325,7 @@ export function IdentificationPanel({
             {t("selectPhotos")}
           </Text>
           <Copy muted>{t("selectPhotosHelp")}</Copy>
+          <Copy muted>{t("uploadExplain")}</Copy>
           <View style={panel.photoGrid}>
             {data.photos.map((photo, index) => {
               const checked = photoIds.includes(photo.id);
@@ -557,3 +574,13 @@ const panel = StyleSheet.create({
     alignSelf: "flex-start",
   },
 });
+
+export function IdentificationPanel(
+  props: Parameters<typeof CloudIdentificationPanel>[0],
+) {
+  return (
+    <RequireSignIn>
+      <CloudIdentificationPanel {...props} />
+    </RequireSignIn>
+  );
+}

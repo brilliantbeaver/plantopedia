@@ -5,22 +5,17 @@ import { usePreferences } from "../../theme/preferences";
 import { GlassSurface } from "../../theme/GlassSurface";
 import { navigationLayout } from "../../theme/navigation-layout";
 import { AppIcon, type IconName } from "../../components/AppIcon";
+import { useSessionApi } from "../../services/session";
 
 const destinations = [
   {
-    name: "index",
+    name: "explore",
     label: "explore",
     icon: "compass-outline",
     active: "compass",
   },
-  { name: "plants", label: "plants", icon: "leaf-outline", active: "leaf" },
+  { name: "plants", label: "myGarden", icon: "leaf-outline", active: "leaf" },
   { name: "scan", label: "scan", icon: "camera-outline", active: "camera" },
-  {
-    name: "settings",
-    label: "settings",
-    icon: "settings-outline",
-    active: "settings",
-  },
   {
     name: "ask",
     label: "ask",
@@ -29,12 +24,14 @@ const destinations = [
   },
 ] as const;
 export default function TabsLayout() {
+  const { kind } = useSessionApi();
   const { t, colors } = usePreferences();
   const insets = useSafeAreaInsets();
   const { width, fontScale } = useWindowDimensions();
   const layout = navigationLayout(width, fontScale, insets.left, insets.right);
   return (
     <Tabs
+      initialRouteName="explore"
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: colors.primary,
@@ -43,6 +40,7 @@ export default function TabsLayout() {
         tabBarLabelPosition: layout.horizontal ? "beside-icon" : "below-icon",
         tabBarAllowFontScaling: true,
         tabBarStyle: {
+          display: kind === "guest" ? "none" : "flex",
           position: "absolute",
           width: layout.width,
           left: layout.left,
@@ -70,6 +68,7 @@ export default function TabsLayout() {
         },
       }}
     >
+      <Tabs.Screen name="settings" options={{ href: null }} />
       {destinations.map((item) => (
         <Tabs.Screen
           key={item.name}
@@ -77,10 +76,10 @@ export default function TabsLayout() {
           options={{
             title: t(item.label),
             tabBarAccessibilityLabel: t(item.label),
-            tabBarLabel: ({ color, focused }) => (
+            tabBarLabel: ({ focused }) => (
               <Text
                 style={{
-                  color,
+                  color: colors.text,
                   fontSize: layout.labelSize,
                   lineHeight: layout.lineHeight,
                   fontWeight: focused ? "700" : "600",
@@ -98,13 +97,20 @@ export default function TabsLayout() {
                 style={[
                   nav.icon,
                   { width: layout.horizontal ? 36 : 48 },
-                  { backgroundColor: focused ? colors.muted : "transparent" },
+                  {
+                    backgroundColor:
+                      item.name === "scan"
+                        ? colors.primary
+                        : focused
+                          ? colors.muted
+                          : "transparent",
+                  },
                 ]}
               >
                 <AppIcon
                   name={(focused ? item.active : item.icon) as IconName}
                   size={layout.iconSize}
-                  color={color}
+                  color={item.name === "scan" ? colors.onPrimary : color}
                 />
               </View>
             ),
